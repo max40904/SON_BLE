@@ -40,6 +40,7 @@ public class BLEFragement extends Fragment implements View.OnClickListener {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+    private String UUID;
     private View view;
     private OnFragmentInteractionListener mListener;
 
@@ -76,6 +77,7 @@ public class BLEFragement extends Fragment implements View.OnClickListener {
         if (getArguments() != null) {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
+            UUID = mParam1;
         }
 
         /**
@@ -122,7 +124,7 @@ public class BLEFragement extends Fragment implements View.OnClickListener {
         /**
          * ble work
          * */
-        ble = new BleInterface(getContext());
+        ble = new BleInterface(getContext(),UUID);
 
 
         ble.setBluetoothAdapter(mBluetoothAdapter);

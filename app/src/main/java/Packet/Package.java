@@ -3,38 +3,47 @@ package Packet;
 import java.util.Arrays;
 
 public class Package {
-    private byte [] byteData;
-    private byte [] UUID;
-    private byte [] SID;
-    private byte [] rawData;
-    public Package (byte [] packetbyte){
-        byteData=  packetbyte ;
-        byte[] incomingPackage = packetbyte;
+    private byte [] oriData; //original data
+    private BLEdataFormat UUID;
+    private BLEdataFormat servicedata;
 
-//        SID = Arrays.copyOfRange(incomingPackage, 6, 8); //java.util.Arrays
-//        rawData =  Arrays.copyOfRange(incomingPackage, 8, incomingPackage[4] + 5);
-//        rawPackage = info_content;
-//        //uuid = new String(info_uuid); //run ma
-//        //uuid = Arrays.toString(info_uuid);
-//        uuid = Integer.toString(info_uuid[0]/16) + Integer.toString(info_uuid[0]%16) + Integer.toString(info_uuid[1]/16) + Integer.toString(info_uuid[1]%16);
-//        serialNumber = info_content[0];
-//        dataAmount = info_content[1] - '0' & 0xFF;
-//        data = Arrays.copyOfRange(info_content, 2, info_content.length);
+    public Package (byte [] packetbyte){
+
+        oriData =  Arrays.copyOfRange(packetbyte, 0, 32);
+        int uuid_length = oriData[0];
+        UUID = new BLEdataFormat(Arrays.copyOfRange(oriData ,0 , uuid_length + 1));
+        int sDataLength = oriData[uuid_length + 1 ];
+        servicedata = new BLEdataFormat (Arrays.copyOfRange(oriData , uuid_length + 1 ,  uuid_length + 1 + sDataLength + 1));
+
+
+    }
+    protected Package (){
+
+    }
+    public void setByte(byte [] packetbyte){
+        oriData =  Arrays.copyOfRange(packetbyte, 0, 32);
+        int uuid_length = oriData[0];
+        UUID = new BLEdataFormat(Arrays.copyOfRange(oriData ,0 , uuid_length + 1));
+        int sDataLength = oriData[uuid_length + 1 ];
+        servicedata = new BLEdataFormat (Arrays.copyOfRange(oriData , uuid_length + 1 ,  uuid_length + 1 + sDataLength + 1));
+
+
     }
     public byte [] getUUID(){
-        return null;
+        return UUID.getData();
 
     }
     public byte [] getRawData(){
-        return null;
+        return servicedata.getData();
     }
-    public byte [] getSID(){
-        return null;
+
+    public byte [] getOriData(){
+        return oriData;
     }
     public String toString(){
         String message = "" ;
-        for (int i = 0 ; i <byteData.length ; i++ ){
-            message +="["+i +"]:"+ Integer.toHexString(byteData[i])+", " ;
+        for (int i = 0 ; i <oriData.length ; i++ ){
+            message +="["+i +"]:"+ Integer.toHexString(oriData[i])+", " ;
         }
         return message;
     }

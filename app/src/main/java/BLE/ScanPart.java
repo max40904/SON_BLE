@@ -93,6 +93,7 @@ public class ScanPart {
 
         ScanFilter.Builder builder = new ScanFilter.Builder();
         // Comment out the below line to see all BLE devices around you
+
         builder.setServiceUuid(Constants.Service_UUID);
         scanFilters.add(builder.build());
         Log.d("ScannerFragment","buildScanFilters end");

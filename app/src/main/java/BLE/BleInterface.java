@@ -11,10 +11,12 @@ public class BleInterface {
     private Context context;
     private BluetoothAdapter btAdapter;
     private ScanPart scanpart;
-    public BleInterface(Context context){
+    private String UUID;
+    public BleInterface(Context context, String UUID){
         Log.d("Tracer","BleInterface start");
         this.context = context;
         scanpart = new ScanPart(context);
+        this.UUID = UUID;
         Log.d("Tracer","BleInterface end");
     }
     public void CreateAdervtiserService(){

@@ -19,7 +19,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 
-
+import java.nio.charset.StandardCharsets;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Calendar;
@@ -30,14 +30,19 @@ import GUI.SONNodeFragment;
 import SON.TimeSchedule;
 import SON.SONNode.SONNode;
 import BLE.Constants;
+import java.util.UUID;
+import Converter.Converter;
+
+
+import Packet.*;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener ,  SONNodeFragment.OnFragmentInteractionListener, BLEFragement.OnFragmentInteractionListener,SONGWFragment.OnFragmentInteractionListener{
 
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 456;
     public static final int REQUEST_ENABLE_BT = 1;
     private static int counter = 0 ;
-    Timer timer = new Timer();
-    Timer timer2 = new Timer();
+    private String uniqueName;
+
 
 
     @Override
@@ -45,6 +50,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         Log.d("Tracer", "MainActivity onCreate start");
 
+        uniqueName = UUID.randomUUID().toString();
+        Log.d("Tracer", "uniqueid length:"+uniqueName.length());
         EditText mName = (EditText) findViewById(R.id.editText3);
         EditText y = (EditText) findViewById(R.id.editText2);
         setContentView(R.layout.logout);
@@ -57,6 +64,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
 
+        Log.d("Tracer",uniqueName);
         Log.d("Tracer", "MainActivity onCreate end");
 
 
@@ -64,8 +72,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onResume() {
         super.onResume();
-        Calendar cal = Calendar.getInstance();
-        TimeSchedule temp = new TimeSchedule();
+        uniqueName.substring(0,8);
+        Log.d("Tracer",uniqueName.substring(0,8) );
+
+        PackageJoin join = new PackageJoin(uniqueName.substring(0,8));
+
+//        String show_uuid  = ;
+//        for ( int j = 0; j < temp_uuid.length; j++ ) {
+//            int v = temp_uuid[j] & 0xFF;
+//            show_uuid[j * 2] = show_uuid[v >>> 4];
+//            show_uuid[j * 2 + 1] = show_uuid[v & 0x0F];
+//        }
+
+        Log.d("Tracer", "DATA : "+new String(join.getRawData(), StandardCharsets.UTF_8));
+        Log.d("Tracer", "UUID : "+Converter.bytesToHex(join.getUUID ( ) ) );
+        PackageJoin ackJoin = new PackageJoin(join.getOriData());
+
+        Log.d("Tracer", "newDATA : "+new String(ackJoin.getRawData(), StandardCharsets.UTF_8));
+        Log.d("Tracer", "newUUID : "+Converter.bytesToHex(ackJoin.getUUID ( ) ) );
 //        Calendar cal = Calendar.getInstance();
 //        cal.add(Calendar.SECOND,5);
 //        timecounter task = new timecounter();
@@ -129,13 +153,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
     public void setSONGGatewayFragment(){
-        getSupportFragmentManager().beginTransaction().add(R.id.framelayout1, SONGWFragment.newInstance("heelo","world"),"f1").commit();
+        getSupportFragmentManager().beginTransaction().add(R.id.framelayout1, SONGWFragment.newInstance(uniqueName,"world"),"f1").commit();
     }
     public void setSONNodeFragment(){
-        getSupportFragmentManager().beginTransaction().add(R.id.framelayout1, SONNodeFragment.newInstance("heelo","world"),"f1").commit();
+        getSupportFragmentManager().beginTransaction().add(R.id.framelayout1, SONNodeFragment.newInstance(uniqueName,"world"),"f1").commit();
     }
     public void setBLEFragment(){
-        getSupportFragmentManager().beginTransaction().add(R.id.framelayout2, BLEFragement.newInstance("heelo","world"),"f1").commit();
+        getSupportFragmentManager().beginTransaction().add(R.id.framelayout2, BLEFragement.newInstance(uniqueName,"world"),"f1").commit();
 
     }
 

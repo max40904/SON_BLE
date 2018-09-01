@@ -185,7 +185,7 @@ public class AdvertiserService extends Service {
         //dataBuilder.setIncludeDeviceName(true);
 
         /* For example - this will cause advertising to fail (exceeds size limit) */
-        String failureData = "1111111111111";
+        String failureData = "1234";
         dataBuilder.addServiceData(Constants.Service_UUID, failureData.getBytes());
 
         return dataBuilder.build();
