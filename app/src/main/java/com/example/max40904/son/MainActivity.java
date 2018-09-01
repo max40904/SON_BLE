@@ -128,7 +128,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     setSONGGatewayFragment();
                 }
                 Log.d("Tracer","4");
-                setBLEFragment();
+               // setBLEFragment();
                 x.clearFocus();
                 y.clearFocus();
         }

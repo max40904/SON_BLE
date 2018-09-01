@@ -14,6 +14,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
+import android.provider.SyncStateContract;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
@@ -52,7 +53,7 @@ public class AdvertiserService extends Service {
 
     public static final String  intentArgument3 = "Time";
 
-    private String  UUID;
+    private String  nName;
 
     private byte[]  rawData;
 
@@ -72,10 +73,10 @@ public class AdvertiserService extends Service {
         Log.d("Tracer","AdvertiserService onStartCommand start");
         running = true;
         flag = intent.getExtras().getBoolean("flag");
-        UUID = intent.getStringExtra(intentArgument);
+        nName = intent.getStringExtra(intentArgument);
         rawData = intent.getByteArrayExtra(intentArgument2);
         timeout = intent.getIntExtra(intentArgument3,0);
-        String meesage = "this is "+UUID + "  "+rawData +"   " +timeout;
+        String meesage = "this is "+nName + "  "+rawData +"   " +timeout;
 
         Log.d("Tracer",meesage);
 
@@ -184,9 +185,7 @@ public class AdvertiserService extends Service {
         dataBuilder.addServiceUuid(Constants.Service_UUID);
         //dataBuilder.setIncludeDeviceName(true);
 
-        /* For example - this will cause advertising to fail (exceeds size limit) */
-        String failureData = "1234";
-        dataBuilder.addServiceData(Constants.Service_UUID, failureData.getBytes());
+        dataBuilder.addServiceData(Constants.getService_UUID(nName), rawData);
 
         return dataBuilder.build();
     }
@@ -223,11 +222,12 @@ public class AdvertiserService extends Service {
         }
     }
     private void stopAdvertising() {
-        Log.d(TAG, "Service: Stopping Advertising");
+        Log.d("Trafcer", "Service: Stopping Advertising start");
         if (mBluetoothLeAdvertiser != null) {
             mBluetoothLeAdvertiser.stopAdvertising(mAdvertiseCallback);
             mAdvertiseCallback = null;
         }
+        Log.d("Tracer", "Service: Stopping Advertising end");
     }
     private void sendFailureIntent(int errorCode) {
         Intent failureIntent = new Intent();

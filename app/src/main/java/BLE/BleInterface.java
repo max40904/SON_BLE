@@ -37,9 +37,9 @@ public class BleInterface {
     *
     *
     * */
-    public void startAdvertising(String uuid, byte [] data, int timelimit) {
+    public void startAdvertising(String nodename, byte [] data, int timelimit) {
         Log.d("Tracer","BleInterface startAdvertising start");
-        context.startService(getAdvertisingIntent(uuid,data,timelimit));
+        context.startService(getAdvertisingIntent(nodename,data,timelimit));
         Log.d("Tracer","BleInterface startAdvertising end");
 
     }
@@ -48,16 +48,16 @@ public class BleInterface {
      * Stops BLE Advertising by stopping {@code AdvertiserService}.
      */
     public void stopAdvertising() {
-
+        Log.d("Tracer","BleInterface stopAdvertising start");
 
         context.stopService(getIntent());
-
+        Log.d("Tracer","BleInterface stopAdvertising end");
     }
 
-    public Intent getAdvertisingIntent(String UUID,byte [] rawData, int time){
+    public Intent getAdvertisingIntent(String nName,byte [] rawData, int time){
         Intent intent = getIntent();
         Bundle bundle = new Bundle();
-        bundle.putString(AdvertiserService.intentArgument,UUID);
+        bundle.putString(AdvertiserService.intentArgument,nName);
         bundle.putByteArray(AdvertiserService.intentArgument2,rawData);
         bundle.putInt(AdvertiserService.intentArgument3, time);
 

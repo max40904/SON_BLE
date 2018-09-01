@@ -2,6 +2,7 @@ package GUI;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -24,12 +25,11 @@ import java.util.Arrays;
 import BLE.BleInterface;
 
 /**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link BLEFragement.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link BLEFragement#newInstance} factory method to
- * create an instance of this fragment.
+*****
+ * give up
+ *
+ *
+ *
  */
 public class BLEFragement extends Fragment implements View.OnClickListener {
     // TODO: Rename parameter arguments, choose names that match
@@ -46,9 +46,14 @@ public class BLEFragement extends Fragment implements View.OnClickListener {
 
     private BleInterface ble;
     private BluetoothAdapter mBluetoothAdapter;
+
+
+
     public BLEFragement() {
         // Required empty public constructor
     }
+
+
 
     /**
      * Use this factory method to create a new instance of
@@ -147,9 +152,8 @@ public class BLEFragement extends Fragment implements View.OnClickListener {
     @Override
     public void onResume(){
         super.onResume();
-        byte [] test = new byte[10];
-        Arrays.fill( test, (byte) 1 );
-        ble.startAdvertising("test", test, 20);
+
+
     }
 
     // TODO: Rename method, update argument and hook method into UI event

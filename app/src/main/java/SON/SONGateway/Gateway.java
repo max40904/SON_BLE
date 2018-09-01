@@ -7,9 +7,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import SON.SONConstants;
-import SON.SONNode.ReceiveSlot;
-import SON.SONNode.ScheduleSlot;
-import SON.SONNode.SendSlot;
+
 import SON.TimeSchedule;
 
 public class Gateway {
@@ -43,6 +41,28 @@ public class Gateway {
 
 
     }
+    public class ReceiveJoinSlot extends TimerTask {
+        private Context context;
+        public ReceiveJoinSlot(Context context){
+            this.context = context;
+        }
+        @Override
+        public void run() {
+
+        }
+    }
+    public class SendScheduleSlot extends TimerTask {
+        private Context context;
+        public SendScheduleSlot(Context context){
+            this.context = context;
+        }
+        @Override
+        public void run() {
+
+        }
+    }
+
+
 
 
 }

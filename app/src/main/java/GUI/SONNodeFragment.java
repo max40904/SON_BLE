@@ -1,5 +1,7 @@
 package GUI;
 
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -12,11 +14,13 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.example.max40904.son.R;
 
 import java.util.Calendar;
 
+import BLE.BleInterface;
 import SON.SONNode.SONNode;
 import SON.TimeSchedule;
 
@@ -31,16 +35,28 @@ import SON.TimeSchedule;
 public class SONNodeFragment extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
+
+
+    private BleInterface ble;
+    private BluetoothAdapter mBluetoothAdapter;
+
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
+
+    public static final String SETSCHDULE_INTENT = "SETSCHDULE_INTENT";
+    public static final String SETSCHDULE_MESSAGE = "SETSCHDULE_MESSAGE";
+
+
 
     public static final String RECEIVER_INTENT = "RECEIVER_INTENT";
     public static final String RECEIVER_MESSAGE = "RECEIVER_MESSAGE";
 
+
+
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
-
+    private String UUID;
     private OnFragmentInteractionListener mListener;
     private SONNode sonnode ;
     public SONNodeFragment() {
@@ -72,10 +88,63 @@ public class SONNodeFragment extends Fragment {
         if (getArguments() != null) {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
+            UUID = mParam1;
         }
-        sonnode = new SONNode(getContext());
+
+        if (savedInstanceState == null) {
+
+            mBluetoothAdapter = ((BluetoothManager) getActivity().getSystemService(Context.BLUETOOTH_SERVICE))
+                    .getAdapter();
+
+            // Is Bluetooth supported on this device?
+            if (mBluetoothAdapter != null) {
+
+                // Is Bluetooth turned on?
+                if (mBluetoothAdapter.isEnabled()) {
+
+                    // Are Bluetooth Advertisements supported on this device?
+                    if (mBluetoothAdapter.isMultipleAdvertisementSupported()) {
+
+
+
+                    } else {
+                        Toast.makeText(getActivity(), "Fail ,this device didn't support Peripheral  ", Toast.LENGTH_SHORT).show();
+                        Log.d("Tracer","Fail ,this device didn't support Peripheral  ");
+
+                    }
+                } else {
+
+                    Toast.makeText(getActivity(), "Fail ,this device didn't open ble  ", Toast.LENGTH_SHORT).show();
+                    Log.d("Tracer","Fail ,this device didn't open ble  ");
+                }
+            } else {
+
+                Toast.makeText( getActivity(), "Fail ,this device didn't get ble  ", Toast.LENGTH_SHORT).show();
+                Log.d("Tracer","Fail ,this device didn't get ble  ");
+
+            }
+        }
+
+
+
+
+
+        /**
+         * ble work
+         * */
+        ble = new BleInterface(getContext(),UUID);
+
+
+        ble.setBluetoothAdapter(mBluetoothAdapter);
+
+        sonnode = new SONNode(getContext(),ble);
+
         LocalBroadcastManager.getInstance(getActivity()).registerReceiver((mBroadcastReceiver),
                 new IntentFilter(RECEIVER_INTENT)
+        );
+
+        LocalBroadcastManager.getInstance(getActivity()).registerReceiver((mBroadcastReceiver),
+                new IntentFilter(SETSCHDULE_INTENT)
         );
     }
 
@@ -95,8 +164,8 @@ public class SONNodeFragment extends Fragment {
     @Override
     public void onResume(){
         super.onResume();
-        Intent intent = new Intent(RECEIVER_INTENT);
-        intent.putExtra(RECEIVER_MESSAGE, "i am come from onResume");
+        Intent intent = new Intent(SETSCHDULE_INTENT);
+        intent.putExtra(SETSCHDULE_MESSAGE, "i am come from onResume");
         LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(intent);
     }
 
@@ -136,11 +205,18 @@ public class SONNodeFragment extends Fragment {
         @Override
         public void onReceive(Context context, Intent intent)
         {
-            String message = intent.getStringExtra(RECEIVER_MESSAGE);
-            Calendar cri = Calendar.getInstance();
-            TimeSchedule t  = new TimeSchedule();
-            sonnode.setCycleTime(cri,t);
-            Log.d("Trigger",message);
+            if (intent.getAction().equals(RECEIVER_INTENT)){
+                Log.d("Trigger",RECEIVER_MESSAGE);
+            }
+            else if (intent.getAction().equals(SETSCHDULE_INTENT)){
+                Log.d("Trigger",SETSCHDULE_INTENT);
+                String message = intent.getStringExtra(SETSCHDULE_MESSAGE);
+                Calendar cri = Calendar.getInstance();
+                TimeSchedule t  = new TimeSchedule();
+                sonnode.setCycleTime(cri,t);
+                Log.d("Trigger",message);
+            }
+
             // now you can call all your fragments method here
         }
     };

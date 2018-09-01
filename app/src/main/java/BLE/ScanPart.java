@@ -7,13 +7,18 @@ import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import GUI.SONNodeFragment;
 import Packet.Package;
 
 public class ScanPart {
@@ -40,7 +45,7 @@ public class ScanPart {
         mBluetoothLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
     }
     public void startScanning(int target , int time) {
-        Log.d("ScannerFragment","startScanning start");
+        Log.d("Tracer","startScanning start");
         if (mScanCallback == null) {
             this.target = target;
             Log.d("Tracer", "Starting Scanning");
@@ -57,15 +62,10 @@ public class ScanPart {
             mScanCallback = new SampleScanCallback();
 
             mBluetoothLeScanner.startScan(buildScanFilters(), buildScanSettings(), mScanCallback);
-            Log.d("ScannerFragment","startScanning start");
-            //mBluetoothLeScanner.startScan( mScanCallback);
-            Log.d("ScannerFragment","startScanning end");
 
-            Toast.makeText(context, "Start scan now", Toast.LENGTH_LONG).show();
         } else {
-            Toast.makeText(context, "Already Scanning", Toast.LENGTH_SHORT);
         }
-        Log.d("ScannerFragment","startScanning end");
+        Log.d("Tracer","startScanning end");
     }
     public void stopScanning() {
         Log.d("ScannerFragment","stopScanning start");
@@ -107,27 +107,35 @@ public class ScanPart {
         @Override
         public void onBatchScanResults(List<ScanResult> results) {
             super.onBatchScanResults(results);
-            Log.d("SampleScanCallback","onBatchScanResults start");
+            Log.d("Tracer","onBatchScanResults start");
 
             for (ScanResult result : results) {
                 Package test  = new Package(result.getScanRecord().getBytes());
                 Log.d("Tracer", "SampleScanCallback onBatchScanResults " + test);
             }
-//            mAdapter.notifyDataSetChanged();
+            Bundle bundle = new Bundle();
+            bundle.putString(SONNodeFragment.RECEIVER_MESSAGE,"i am come from onBatchScanResults");
+            Intent intent = new Intent(SONNodeFragment.RECEIVER_INTENT);
+            intent.putExtras(bundle);
+            LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
 
-            Log.d("SampleScanCallback","onBatchScanResults end");
+            Log.d("Tracer","onBatchScanResults end");
         }
 
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             super.onScanResult(callbackType, result);
-            Log.d("SampleScanCallback","onBatchScanResults start");
+            Log.d("Tracer","onBatchScanResults start");
 
             Package test  = new Package(result.getScanRecord().getBytes());
-
+            Bundle bundle = new Bundle();
+            bundle.putString(SONNodeFragment.RECEIVER_MESSAGE,"i am come from onBatchScanResults");
+            Intent intent = new Intent(SONNodeFragment.RECEIVER_INTENT);
+            intent.putExtras(bundle);
+            LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
             Log.d("Tracer", "SampleScanCallback onScanResult " + test);
 
-            Log.d("SampleScanCallback","onBatchScanResults end");
+            Log.d("Tracer","onBatchScanResults end");
         }
 
         @Override
