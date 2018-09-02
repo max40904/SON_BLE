@@ -15,12 +15,20 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
-
+import Converter.Converter;
 import com.example.max40904.son.R;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 
 import BLE.BleInterface;
+import Packet.BLEDataType;
+import Packet.PackageTimeSchedule;
+import Packet.PacketAckJoin;
+import SON.DeviceInformation;
 import SON.SONNode.SONNode;
 import SON.TimeSchedule;
 
@@ -39,7 +47,6 @@ public class SONNodeFragment extends Fragment {
 
     private BleInterface ble;
     private BluetoothAdapter mBluetoothAdapter;
-
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
 
@@ -132,19 +139,22 @@ public class SONNodeFragment extends Fragment {
         /**
          * ble work
          * */
-        ble = new BleInterface(getContext(),UUID);
+        ble = new BleInterface(getContext(),UUID ,false);
 
-
+        Log.d("Tracer","MAC:"+UUID);
         ble.setBluetoothAdapter(mBluetoothAdapter);
 
         sonnode = new SONNode(getContext(),ble);
+        sonnode.setMacAddress(UUID.substring(0,8));
+        byte [] test = new byte[10];
+        Arrays.fill( test, (byte) 1 );
 
-        LocalBroadcastManager.getInstance(getActivity()).registerReceiver((mBroadcastReceiver),
-                new IntentFilter(RECEIVER_INTENT)
-        );
 
         LocalBroadcastManager.getInstance(getActivity()).registerReceiver((mBroadcastReceiver),
                 new IntentFilter(SETSCHDULE_INTENT)
+        );
+        LocalBroadcastManager.getInstance(getActivity()).registerReceiver((mBroadcastReceiver),
+                new IntentFilter(RECEIVER_INTENT)
         );
     }
 
@@ -164,9 +174,10 @@ public class SONNodeFragment extends Fragment {
     @Override
     public void onResume(){
         super.onResume();
-        Intent intent = new Intent(SETSCHDULE_INTENT);
-        intent.putExtra(SETSCHDULE_MESSAGE, "i am come from onResume");
-        LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(intent);
+//        Intent intent = new Intent(SETSCHDULE_INTENT);
+//        intent.putExtra(SETSCHDULE_MESSAGE, "i am come from onResume");
+//        LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(intent);
+        sonnode.startJoinTime();
     }
 
     @Override
@@ -205,16 +216,35 @@ public class SONNodeFragment extends Fragment {
         @Override
         public void onReceive(Context context, Intent intent)
         {
+
+
             if (intent.getAction().equals(RECEIVER_INTENT)){
+                byte [] oribyteA = intent.getByteArrayExtra(RECEIVER_MESSAGE);
+                PacketAckJoin ackpacket = new PacketAckJoin(oribyteA);
+                Log.d("Trigger","MAC:"+ackpacket.getMac());
+
+                String realmac = new String (ackpacket.getMac(), StandardCharsets.UTF_8 );
+                if (realmac.equals(UUID.substring(0,8))){
+                    ble.stopAdvertising();
+                    ble.stopScan();
+                    ble.startScan(BLEDataType.Timeschdule,10);
+                }
                 Log.d("Trigger",RECEIVER_MESSAGE);
             }
             else if (intent.getAction().equals(SETSCHDULE_INTENT)){
                 Log.d("Trigger",SETSCHDULE_INTENT);
-                String message = intent.getStringExtra(SETSCHDULE_MESSAGE);
+                ble.stopScan();
+                byte [] oribyteA = intent.getByteArrayExtra(SETSCHDULE_MESSAGE);
+                PackageTimeSchedule timepacket = new PackageTimeSchedule(oribyteA);
+                Log.d("Trigger", "Split TimeSchedule Minutes : "+(timepacket.getMinute() & 0xff));
+                Log.d("Trigger", "Split TimeSchedule Seconds : "+ ( timepacket.getSecond() & 0xff));
+                Log.d("Trigger", "Split TimeSchedule Slot Amount : "+(timepacket.getSlotNumber() & 0xff));
+                Log.d("Trigger", "Split TimeSchedule Slot State : "+Converter.bytesToHex(timepacket.getSlotState() ) );
+
                 Calendar cri = Calendar.getInstance();
                 TimeSchedule t  = new TimeSchedule();
                 sonnode.setCycleTime(cri,t);
-                Log.d("Trigger",message);
+
             }
 
             // now you can call all your fragments method here

@@ -26,9 +26,11 @@ public class BLEdataFormat {
     public int getType(){
         return type;
     }
+    //
     public byte []  getData(){
         return data;
     }
+    //all btte (include length type)
     public byte [] getByte(){
         byte temp1 = (byte)( (length & 0x000000ff) );
         byte temp2 = (byte)( (type & 0x000000ff) );

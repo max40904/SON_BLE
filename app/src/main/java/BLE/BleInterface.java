@@ -12,15 +12,19 @@ public class BleInterface {
     private BluetoothAdapter btAdapter;
     private ScanPart scanpart;
     private String UUID;
-    public BleInterface(Context context, String UUID){
+    //context = acitivy context , UUID = MAC ADDRESS, flag: (true = gw ) (false = node)
+    public BleInterface(Context context, String UUID, boolean flag){
         Log.d("Tracer","BleInterface start");
         this.context = context;
-        scanpart = new ScanPart(context);
+        scanpart = new ScanPart(context, flag);
         this.UUID = UUID;
         Log.d("Tracer","BleInterface end");
     }
     public void CreateAdervtiserService(){
         Log.d("Tracer","BleInterface start");
+
+
+
 
         Log.d("Tracer","BleInterface end");
     }
@@ -83,18 +87,21 @@ public class BleInterface {
         scanpart.setBleAdapter(btAdapter);
     }
     //listen someone
-    public void startScan(int target){
-        scanpart.startScanning(target, SONConstants.timeslot);
+    public void startScan(int filter){
+        scanpart.startScanning(filter, SONConstants.timeslot);
     }
     //listen all
     public void startScan(){
 
-        scanpart.startScanning(-1, SONConstants.timeslot);
+        scanpart.startScanning(0, SONConstants.timeslot);
     }
 
-    public void startScan(int target, int time){
+    public void startScan(int filter, int time){
 
-        scanpart.startScanning(target, time );
+        scanpart.startScanning(filter, time*1000 );
+    }
+    public void stopScan(){
+        scanpart.stopScanning();
     }
 
 

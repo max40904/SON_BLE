@@ -19,6 +19,8 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
 public class AdvertiserService extends Service {
@@ -43,6 +45,8 @@ public class AdvertiserService extends Service {
     private Handler mHandler;
 
     private Runnable timeoutRunnable;
+
+    private static Queue<AdvertiseCallback> callbackQueue= new LinkedList<AdvertiseCallback>();
 
     public static final int ADVERTISING_TIMED_OUT = 6;
 
@@ -134,24 +138,24 @@ public class AdvertiserService extends Service {
 
         Log.d("Tracer","AdvertiserService startAdvertising start");
 
-        if (mAdvertiseCallback == null) {
-            AdvertiseSettings settings = buildAdvertiseSettings();
-            AdvertiseData data = buildAdvertiseData();
-            //AdvertiseData scanresult = buildScanResultData();
-            mAdvertiseCallback = new AdvertiserService.SampleAdvertiseCallback();
 
-            /*if (mBluetoothLeAdvertiser != null) {
-                mBluetoothLeAdvertiser.startAdvertising(settings, data,
-                    mAdvertiseCallback);
-                Log.d(TAG, "Wareable: Starting Advertising!"+ data);
-            }*/
-            if (mBluetoothLeAdvertiser != null) {
-                //mBluetoothLeAdvertiser.startAdvertising(settings, data,scanresult, mAdvertiseCallback);
-                mBluetoothLeAdvertiser.startAdvertising(settings, data, mAdvertiseCallback);
-                Log.d(TAG, "Wareable: Starting Advertising!" + data + "\n");
-                //Log.d(TAG, "Wareable: scanresult"+ scanresult + "\n");
-            }
+        AdvertiseSettings settings = buildAdvertiseSettings();
+        AdvertiseData data = buildAdvertiseData();
+        //AdvertiseData scanresult = buildScanResultData();
+        mAdvertiseCallback = new AdvertiserService.SampleAdvertiseCallback();
+        callbackQueue.offer(mAdvertiseCallback);
+        /*if (mBluetoothLeAdvertiser != null) {
+            mBluetoothLeAdvertiser.startAdvertising(settings, data,
+                mAdvertiseCallback);
+            Log.d(TAG, "Wareable: Starting Advertising!"+ data);
+        }*/
+        if (mBluetoothLeAdvertiser != null) {
+            //mBluetoothLeAdvertiser.startAdvertising(settings, data,scanresult, mAdvertiseCallback);
+            mBluetoothLeAdvertiser.startAdvertising(settings, data, mAdvertiseCallback);
+            Log.d(TAG, "Wareable: Starting Advertising!" + data + "\n");
+            //Log.d(TAG, "Wareable: scanresult"+ scanresult + "\n");
         }
+
         Log.d("Tracer","AdvertiserService startAdvertising end");
     }
 
@@ -163,7 +167,7 @@ public class AdvertiserService extends Service {
             @Override
             public void run() {
                 Log.d("Tracer", "AdvertiserService has reached timeout of "+timeout+"seconds, stopping advertising.");
-                stopSelf();
+                stopAdvertising();
             }
         };
         mHandler.postDelayed(timeoutRunnable, timeout * 1000);
@@ -184,6 +188,7 @@ public class AdvertiserService extends Service {
         AdvertiseData.Builder dataBuilder = new AdvertiseData.Builder();
         dataBuilder.addServiceUuid(Constants.Service_UUID);
         //dataBuilder.setIncludeDeviceName(true);
+        Constants.getService_UUID(nName);
 
         dataBuilder.addServiceData(Constants.getService_UUID(nName), rawData);
 
@@ -210,7 +215,6 @@ public class AdvertiserService extends Service {
             super.onStartFailure(errorCode);
 
             Log.d(TAG, "Advertising failed");
-            sendFailureIntent(errorCode);
             stopSelf();
 
         }
@@ -222,8 +226,14 @@ public class AdvertiserService extends Service {
         }
     }
     private void stopAdvertising() {
-        Log.d("Trafcer", "Service: Stopping Advertising start");
+        Log.d("Tracer", "Service: Stopping Advertising start");
         if (mBluetoothLeAdvertiser != null) {
+            mAdvertiseCallback = callbackQueue.poll();
+            if (mAdvertiseCallback ==null){
+                Log.d("Tracer", "AdvertiserService stopAdvertising wrong!");
+                return ;
+
+            }
             mBluetoothLeAdvertiser.stopAdvertising(mAdvertiseCallback);
             mAdvertiseCallback = null;
         }

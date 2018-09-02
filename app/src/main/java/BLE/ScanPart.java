@@ -18,8 +18,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import GUI.SONGWFragment;
 import GUI.SONNodeFragment;
 import Packet.Package;
+import Packet.BLEDataType;
 
 public class ScanPart {
     private Context context;
@@ -35,9 +37,12 @@ public class ScanPart {
 
     private Handler mHandler;
 
-    public ScanPart(Context context) {
+    private boolean flag;
+
+    public ScanPart(Context context, boolean flag) {
         this.context = context;
         mHandler = new Handler();
+        this.flag = flag;
     }
 
     public void setBleAdapter(BluetoothAdapter btAdapter) {
@@ -109,15 +114,77 @@ public class ScanPart {
             super.onBatchScanResults(results);
             Log.d("Tracer","onBatchScanResults start");
 
-            for (ScanResult result : results) {
-                Package test  = new Package(result.getScanRecord().getBytes());
-                Log.d("Tracer", "SampleScanCallback onBatchScanResults " + test);
+
+
+            //GW
+            if (flag){
+
+                for (ScanResult result : results) {
+                    Package oripack  = new Package(result.getScanRecord().getBytes());
+                    if (target != oripack.getServicetpye() && target != 0){
+                        return;
+                    }
+                    switch(oripack.getServicetpye()){
+                        case BLEDataType.Timeschdule:{
+
+                            break;
+                        }
+                        case BLEDataType.Join:
+                            Log.d("Tracer", "SampleScanCallback Join " + oripack);
+                            sendIntentByte(SONGWFragment.GW_RECEIVER_INTENT,SONGWFragment.GW_RECEIVER_MESSAGE, result.getScanRecord().getBytes());
+                            break;
+                        case BLEDataType.AckJoin:
+                            break;
+
+                        case BLEDataType.Node:
+                            break;
+
+                        default:
+                            return;
+
+
+                    }
+
+                }
+
+
             }
-            Bundle bundle = new Bundle();
-            bundle.putString(SONNodeFragment.RECEIVER_MESSAGE,"i am come from onBatchScanResults");
-            Intent intent = new Intent(SONNodeFragment.RECEIVER_INTENT);
-            intent.putExtras(bundle);
-            LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+            //NODE
+            else{
+                for (ScanResult result : results) {
+                    Package oripack  = new Package(result.getScanRecord().getBytes());
+                    if (target != oripack.getServicetpye()&& target != 0){
+                        return;
+                    }
+                    switch(oripack.getServicetpye()){
+                        case BLEDataType.Timeschdule:
+                            Log.d("Tracer", "SampleScanCallback Timeschdule " + oripack);
+                            sendIntentByte(SONNodeFragment.SETSCHDULE_INTENT,SONNodeFragment.SETSCHDULE_MESSAGE, result.getScanRecord().getBytes());
+                            break;
+
+                        case BLEDataType.Join:
+                            break;
+
+                        case BLEDataType.AckJoin:
+                            Log.d("Tracer", "SampleScanCallback AckJoin " + oripack);
+                            sendIntentByte(SONNodeFragment.RECEIVER_INTENT ,SONNodeFragment.RECEIVER_MESSAGE, result.getScanRecord().getBytes());
+                            break;
+
+
+                        case BLEDataType.Node:
+                            break;
+
+                        default:
+                            return;
+
+
+                    }
+
+                }
+
+            }
+
+
 
             Log.d("Tracer","onBatchScanResults end");
         }
@@ -125,17 +192,69 @@ public class ScanPart {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             super.onScanResult(callbackType, result);
-            Log.d("Tracer","onBatchScanResults start");
+            Package oripack  = new Package(result.getScanRecord().getBytes());
+            if (target != oripack.getServicetpye()&& target != 0){
+                return;
+            }
+            Log.d("Tracer","onScanResult start");
+            //GW
+            if (flag){
+                switch(oripack.getServicetpye()){
+                    case BLEDataType.Timeschdule:
 
-            Package test  = new Package(result.getScanRecord().getBytes());
-            Bundle bundle = new Bundle();
-            bundle.putString(SONNodeFragment.RECEIVER_MESSAGE,"i am come from onBatchScanResults");
-            Intent intent = new Intent(SONNodeFragment.RECEIVER_INTENT);
-            intent.putExtras(bundle);
-            LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-            Log.d("Tracer", "SampleScanCallback onScanResult " + test);
+                        break;
 
-            Log.d("Tracer","onBatchScanResults end");
+                    case BLEDataType.Join:
+                        Log.d("Tracer", "SampleScanCallback Join " + oripack);
+                        sendIntentByte(SONGWFragment.GW_RECEIVER_INTENT,SONGWFragment.GW_RECEIVER_MESSAGE, result.getScanRecord().getBytes());
+                        break;
+
+                    case BLEDataType.AckJoin:
+                        break;
+
+
+                    case BLEDataType.Node:
+                        break;
+
+                    default:
+                        return;
+
+
+                }
+
+
+            }
+            //NODE
+            else{
+                Log.d("Tracer", "SampleScanCallback onScanResult falseme" + oripack);
+                switch(oripack.getServicetpye()){
+                    case BLEDataType.Timeschdule:
+                        Log.d("Tracer", "SampleScanCallback Timeschdule " + oripack);
+                        sendIntentByte(SONNodeFragment.SETSCHDULE_INTENT,SONNodeFragment.SETSCHDULE_MESSAGE, result.getScanRecord().getBytes());
+                        break;
+
+                    case BLEDataType.Join:
+                        break;
+
+                    case BLEDataType.AckJoin:
+                        Log.d("Tracer", "SampleScanCallback AckJoin " + oripack);
+                        sendIntentByte(SONNodeFragment.RECEIVER_INTENT,SONNodeFragment.RECEIVER_MESSAGE, result.getScanRecord().getBytes());
+                        break;
+
+
+                    case BLEDataType.Node:
+                        break;
+
+                    default:
+                        return;
+
+
+                }
+
+            }
+
+
+            Log.d("Tracer","onScanResult end");
         }
 
         @Override
@@ -148,5 +267,15 @@ public class ScanPart {
             Log.d("SampleScanCallback","onScanFailed end");
         }
     }
+    public void sendIntentByte(String target , String meesagetype ,byte [] content){
+        Log.d("Tracer", "ScanPart sendIntent  true" );
+        Bundle bundle = new Bundle();
+        bundle.putByteArray(meesagetype,
+                content);
+        Intent intent = new Intent(target);
+        intent.putExtras(bundle);
+        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+    }
+
 
 }

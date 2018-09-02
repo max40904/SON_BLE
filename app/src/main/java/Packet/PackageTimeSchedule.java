@@ -2,87 +2,91 @@ package Packet;
 
 import android.bluetooth.le.ScanResult;
 import android.util.Log;
-
+import java.nio.*;
 import java.util.Arrays;
 
-public class PackageTimeSchedule {
-    public String uuid ;
-    public int minute ;
-    public int second ;
-    public int slotNumber ;
-    public byte[] slotState ;
+public class PackageTimeSchedule extends Package {
+    private byte Minute ;
+    private byte Second ;
+    private byte SlotNumber ;
+    private byte[] SlotState ;
     //public int[] slotState ;    //ASCII
-    public byte[] rawPackage;   //AdvertiseData without UUID
 
-    PackageTimeSchedule( ScanResult scanResult){
-        byte[] incomingPackage = (scanResult.getScanRecord().getBytes());
-        String message = "" ;
-        for (int i = 0 ; i <incomingPackage.length ; i++ ){
-            message += Integer.toHexString(incomingPackage[i])+ " ";
-        }
-        //Log.d("In PacketTimeSchedule", "Wareable: Receive Packet ("+ incomingPackage.length + "):" +  message + "\n");
-        System.out.println("Data - byte[4] = " + incomingPackage[4]);
-        System.out.println("Data - Hex = " + message);
-        byte[] info_uuid = Arrays.copyOfRange(incomingPackage, 6, 8); //java.util.Arrays
+// System.out.println("Data - byte[4] = " + incomingPackage[4]);
 
-        byte[] info_content = Arrays.copyOfRange(incomingPackage, 8, incomingPackage[4] + 5);
-
-        rawPackage = info_content;
-
-        //uuid = new String(info_uuid); //run ma
-        //uuid = Arrays.toString(info_uuid);
-        uuid = Integer.toString(info_uuid[0]/16) + Integer.toString(info_uuid[0]%16) + Integer.toString(info_uuid[1]/16) + Integer.toString(info_uuid[1]%16);
-        minute = info_content[0] - '0' & 0xFF;
-        second = info_content[1] - '0' & 0xFF;
-        slotNumber = info_content[2] - '0' & 0xFF;
-
-        slotState = Arrays.copyOfRange(info_content, 3, 3+slotNumber+1);
-        /* //Blow is for slotState for "int" formate
-        slotState = new int[info_content.length - 3];
-        for (int i = 3; i < info_content.length; slotState[i - 3] = info_content[i++]);*/
-    }
     public  PackageTimeSchedule(byte [] incomingPackage){
-        String message = "" ;
-        for (int i = 0 ; i <incomingPackage.length ; i++ ){
-            message += Integer.toHexString(incomingPackage[i])+ " ";
-        }
-        byte[] info_uuid = Arrays.copyOfRange(incomingPackage, 6, 8); //java.util.Arrays
+        super(incomingPackage);
         byte[] info_content = Arrays.copyOfRange(incomingPackage, 8, incomingPackage[4] + 5);
-        rawPackage = info_content;
+        Minute = info_content[0];
+        Second = info_content[1];
+        SlotNumber = info_content[2];
 
-        //uuid = new String(info_uuid); //run ma
-        //uuid = Arrays.toString(info_uuid);
-        uuid = Integer.toString(info_uuid[0]/16) + Integer.toString(info_uuid[0]%16) + Integer.toString(info_uuid[1]/16) + Integer.toString(info_uuid[1]%16);
-        minute = info_content[0] - '0' & 0xFF;
-        second = info_content[1] - '0' & 0xFF;
-        slotNumber = info_content[2] - '0' & 0xFF;
-
-        slotState = Arrays.copyOfRange(info_content, 3, 3+slotNumber+1);
-
+        //SlotState = Arrays.copyOfRange(info_content, 3, info_content.length);
+        SlotState = Arrays.copyOfRange(info_content, 3, 3 + 2 * SlotNumber);
     }
 
-    public PackageTimeSchedule(String uuid, int minute ,int second, byte[] slot ){
+    public PackageTimeSchedule(int minute ,int second ,int slotnumber ,int[] slotstate ) {
+        super();
+        byte[] fakeGatewayUniqueName = {(byte) 0x64, (byte) 0x00};
 
+        //----int to byte array----
+        byte m = (byte) (minute & 0x000000ff); Minute = m;
+        byte[] m_b = new byte[]{(m)};
+        byte s = (byte) (second & 0x000000ff); Second = s;
+        byte[] s_b = new byte[]{(s)};
+        byte sn = (byte) (slotnumber & 0x000000ff); SlotNumber= sn;
+        byte[] sn_b = new byte[]{(sn)};
+
+        //----int array to byte array----
+        /*ByteBuffer byteBuffer = ByteBuffer.allocate(slotstate.length * 4);
+        IntBuffer intBuffer = byteBuffer.asIntBuffer();
+        intBuffer.put(slotstate);
+        byte[] ss = byteBuffer.array();*/
+        byte[] ss = new byte[sn * 2];
+        for (int i = 0; i < slotstate.length; i++) {
+            ss[i] = (byte) (slotstate[i] & 0x000000ff);
+        }
+        SlotState = ss;
+
+        byte[] fakeuuid = new byte[2];
+        fakeuuid[0] = 0x11;
+        fakeuuid[1] = 0x11;
+        BLEdataFormat UUID = new BLEdataFormat(3, 3, fakeuuid);
+        byte[] comb_temp2 = CombineByte(fakeGatewayUniqueName, m_b);
+        byte[] comb_temp3 = CombineByte(comb_temp2, s_b);
+        byte[] comb_temp4 = CombineByte(comb_temp3, sn_b);
+        byte[] comb_temp5 = CombineByte(comb_temp4, ss);
+        BLEdataFormat servicedata = new BLEdataFormat(comb_temp5.length + 1, BLEDataType.Timeschdule, comb_temp5);
+        byte[] comb_temp1 = CombineByte(UUID.getByte(), servicedata.getByte());
+
+        setByte(comb_temp1);
     }
-    public String getUuid() {
-        return uuid;
+    public byte getMinute() {
+        return Minute;
     }
-    public int getMinute() {
-        return minute;
+    public byte getSecond(){
+        return Second;
     }
-    public int getSecond(){
-        return second;
-    }
-    public int getSlotNumber(){
-        return slotNumber;
+    public byte getSlotNumber(){
+        return SlotNumber;
     }
     public byte[] getSlotState(){
-        return slotState;
+        return SlotState;
     }/*
     public int[] getSlotState(){
         return slotState;
     }*/
-    public byte[] getRawPackage() {
-        return rawPackage;
+
+    public byte [] getBroadcastData(){
+        return servicedata.getBroadcastData();
     }
+    private byte [] CombineByte(byte[] one, byte[] two){
+        byte[] combined = new byte[one.length + two.length];
+        for (int i = 0; i < combined.length; ++i)
+        {
+            combined[i] = i < one.length ? one[i] : two[i - one.length];
+        }
+        return combined;
+    }
+
 }

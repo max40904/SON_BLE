@@ -17,6 +17,8 @@ import java.util.Timer;
 
 import BLE.BleInterface;
 import GUI.SONNodeFragment;
+import Packet.BLEDataType;
+import Packet.PackageJoin;
 import SON.SONConstants;
 import java.util.TimerTask;
 
@@ -30,7 +32,7 @@ public class SONNode {
     private Timer Sendtimer = new Timer();
     private Context context;
     private  BleInterface ble;
-
+    private  String fakemac;
     private String nodename;
     public static final String RECEIVER_INTENT = "RECEIVER_INTENT";
     public static final String RECEIVER_MESSAGE = "RECEIVER_MESSAGE";
@@ -48,6 +50,20 @@ public class SONNode {
     }
     public void setDID(String DID){
         NodeName = DID;
+    }
+    public void setMacAddress(String mac){
+        fakemac = mac;
+    }
+    public void startJoinTime(){
+        TimerTask rectask = new JoinSlot(context);
+
+        Jointimer.schedule(rectask,0,60*1000 );
+    }
+
+    public void stopJoinTime(){
+
+        Jointimer.cancel();
+
     }
 
     public void setCycleTime(Calendar packetttime, TimeSchedule slotschedule){
@@ -78,7 +94,10 @@ public class SONNode {
         }
         @Override
         public void run() {
+            PackageJoin packet = new PackageJoin(fakemac);
 
+            ble.startAdvertising(BLEDataType.Join_string, packet.getBroadcastData(), 60);
+            ble.startScan(BLEDataType.AckJoin,60);
             Log.d("Tracer","JoinSlot");
         }
     }
@@ -91,9 +110,10 @@ public class SONNode {
         public void run() {
             byte [] test = new byte[10];
             Arrays.fill( test, (byte) 1 );
-            ble.startAdvertising("1234", test, 5);
-            ble.startScan();
-            //ble.stopAdvertising();
+
+            ble.startAdvertising("0001", test, 5);
+
+
             Log.d("Tracer","SendSlot");
         }
     }
@@ -106,13 +126,9 @@ public class SONNode {
         public void run() {
             Bundle bundle = new Bundle();
             bundle.putString(SONNodeFragment.SETSCHDULE_MESSAGE,"i am come from onResume");
-//        bundle.putByteArray(AdvertiserService.intentArgument2,rawData);
-//        bundle.putInt(AdvertiserService.intentArgument3, time);
 
 
             Intent intent = new Intent(SONNodeFragment.SETSCHDULE_INTENT);
-//        intent.putExtra(SONNodeFragment.RECEIVER_MESSAGE, "i am come from onResume");
-//        intent.putExtra(SONNodeFragment.RECEIVER_FLAG, "i am come from onResume");
             intent.putExtras(bundle);
             LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
             Log.d("Tracer","ScheduleSlot");

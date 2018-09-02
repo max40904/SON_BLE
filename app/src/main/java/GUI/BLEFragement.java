@@ -129,7 +129,7 @@ public class BLEFragement extends Fragment implements View.OnClickListener {
         /**
          * ble work
          * */
-        ble = new BleInterface(getContext(),UUID);
+        ble = new BleInterface(getContext(),UUID, false);
 
 
         ble.setBluetoothAdapter(mBluetoothAdapter);
