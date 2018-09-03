@@ -60,7 +60,7 @@ public class Package {
         data[1] = data[0];
         data[0] = swap;
         int type = Converter.byteToInt(data[0]) * 256 + Converter.byteToInt(data[1]);
-        Log.d("convert", ""+type);
+        Log.d("convert", ""+type  + "  1 byte :" +Converter.byteToInt(data[0])+ " 1 byte :" + Converter.byteToInt(data[1]) );
         return type;
     }
 }

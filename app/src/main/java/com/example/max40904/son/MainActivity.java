@@ -77,12 +77,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         PackageJoin join = new PackageJoin(uniqueName.substring(0,8));
 
-//        String show_uuid  = ;
-//        for ( int j = 0; j < temp_uuid.length; j++ ) {
-//            int v = temp_uuid[j] & 0xFF;
-//            show_uuid[j * 2] = show_uuid[v >>> 4];
-//            show_uuid[j * 2 + 1] = show_uuid[v & 0x0F];
-//        }
 
         Log.d("Tracer", "DATA : "+new String(join.getRawData(), StandardCharsets.UTF_8));
         Log.d("Tracer", "UUID : "+Converter.bytesToHex(join.getUUID ( ) ) );
@@ -90,14 +84,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         Log.d("Tracer", "newDATA : "+new String(ackJoin.getRawData(), StandardCharsets.UTF_8));
         Log.d("Tracer", "newUUID : "+Converter.bytesToHex(ackJoin.getUUID ( ) ) );
-//        Calendar cal = Calendar.getInstance();
-//        cal.add(Calendar.SECOND,5);
-//        timecounter task = new timecounter();
-//        timer.schedule(task,cal.getTime());
-//        cal.add(Calendar.SECOND,5);
-//        timecounter task2 = new timecounter();
-//        timer.schedule(task2,cal.getTime());
-        //Toast.makeText(this, "onResume", Toast.LENGTH_LONG).show();
+
+
+
     }
     @Override
     public void onClick(View v) {

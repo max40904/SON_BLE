@@ -11,4 +11,20 @@ public class DeviceInformation {
         this.x = x;
         this.y = y;
     }
+
+    public String getSerialnumber(){
+        return serialnumber;
+    }
+
+    public boolean getState(){
+        return state;
+    }
+
+    public int getLOC_X(){
+        return x;
+    }
+
+    public int getLOC_Y(){
+        return y;
+    }
 }

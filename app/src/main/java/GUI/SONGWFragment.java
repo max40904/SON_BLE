@@ -26,6 +26,7 @@ import java.util.Map;
 import BLE.BleInterface;
 import Packet.BLEDataType;
 import Packet.PackageJoin;
+import Packet.PackageNode;
 import Packet.PacketAckJoin;
 import SON.DeviceInformation;
 import SON.SONGateway.Gateway;
@@ -56,15 +57,18 @@ public class SONGWFragment extends Fragment {
     private String mParam2;
     private String UUID;
     private OnFragmentInteractionListener mListener;
-
+    //TODO: Settime schdule packet intent
     public static final String GW_SETSCHDULE_INTENT = "GW_SETSCHDULE_INTENT";
-    public static final String GW_SETSCHDULE_MESSAGE = "SETSCHDULE_MESSAGE";
+    public static final String GW_SETSCHDULE_MESSAGE = "GW_SETSCHDULE_MESSAGE";
 
 
-
+    //TODO: receive join packet intent
     public static final String GW_RECEIVER_INTENT = "GW_RECEIVER_INTENT";
     public static final String GW_RECEIVER_MESSAGE = "GW_RECEIVER_MESSAGE";
 
+    //TODO: receive package from Node
+    public static final String GW_NODE_INTENT = "GW_NODE_INTENT";
+    public static final String GW_NODE_MESSAGE = "GW_NODE_MESSAGE";
 
 
     public SONGWFragment() {
@@ -139,14 +143,19 @@ public class SONGWFragment extends Fragment {
 
 
         songw = new Gateway(getContext(), ble);
+        songw.setDeviceInformation(devicemap);
         LocalBroadcastManager.getInstance(getActivity()).registerReceiver((mBroadcastReceiver),
                 new IntentFilter(GW_SETSCHDULE_INTENT)
         );
         LocalBroadcastManager.getInstance(getActivity()).registerReceiver((mBroadcastReceiver),
                 new IntentFilter(GW_RECEIVER_INTENT)
         );
+        LocalBroadcastManager.getInstance(getActivity()).registerReceiver((mBroadcastReceiver),
+                new IntentFilter(GW_NODE_INTENT)
+        );
 
 
+        Log.d("DEBUG MODE", "DEBUG");
     }
 
     @Override
@@ -165,6 +174,9 @@ public class SONGWFragment extends Fragment {
     @Override
     public void onResume(){
         super.onResume();
+        Calendar nextschduletime = Calendar.getInstance();
+        nextschduletime.add(Calendar.SECOND,10);
+        songw.setCurrentSchduleTime(nextschduletime);
         Intent intent = new Intent(GW_SETSCHDULE_INTENT);
         intent.putExtra(GW_SETSCHDULE_MESSAGE, "i am come from onResume");
         LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(intent);
@@ -207,7 +219,26 @@ public class SONGWFragment extends Fragment {
         @Override
         public void onReceive(Context context, Intent intent)
         {
-            if (intent.getAction().equals(GW_RECEIVER_INTENT)){
+            if (intent.getAction().equals(GW_NODE_INTENT)){
+                //TODO: show data
+                byte [] oribyteA = intent.getByteArrayExtra(GW_NODE_MESSAGE);
+                PackageNode recpackage =new PackageNode(oribyteA);
+                byte [] recSerialnumber = recpackage.getSerialNumber();
+                Log.d ("SerialCheck",Converter.byteToInt(recSerialnumber[0]) + " " + Integer.parseInt( songw.getTargetNode()) );
+                if (Converter.byteToInt(recSerialnumber[0])!= Integer.parseInt( songw.getTargetNode())){
+                    return ;
+                }
+                ble.stopScan();
+                Log.d("Trigger", "Node SerialNumber : "+Converter.bytesToHex(recpackage.getSerialNumber()));
+
+                Log.d("Trigger", "Node DataAmount : "+ ( recpackage.getDataAmount() & 0xff ));
+
+                Log.d("Trigger", "Node Data : "+Converter.bytesToHex(recpackage.getData()));
+
+                //TODO: if some body miss refresh map
+
+            }
+            else if (intent.getAction().equals(GW_RECEIVER_INTENT)){
                 byte [] oribyteA = intent.getByteArrayExtra(GW_RECEIVER_MESSAGE);
                 PackageJoin recpackage =new PackageJoin(oribyteA);
                 if (recpackage.checkRequestCode()){
@@ -239,7 +270,7 @@ public class SONGWFragment extends Fragment {
                      * input into map
                      *
                      */
-                    DeviceInformation newdevice = new DeviceInformation(mac, true, 0 , 0 );
+                    DeviceInformation newdevice = new DeviceInformation(hex, true, 0 , 0 );
                     devicemap.put(mac, newdevice);
                     serial++;
 
@@ -253,6 +284,13 @@ public class SONGWFragment extends Fragment {
                     ble.startAdvertising(BLEDataType.AckJoin_string, ack.getBroadcastData() , 5);
                     String message = "";
                     byte [] temp = ack.getBroadcastData();
+
+
+                    /**
+                     * refres device map
+                     *
+                     * */
+                    songw.setDeviceInformation(devicemap);
 
                     Log.d ("Trigger","send byte to hex :"+new String(temp,StandardCharsets.UTF_8));
 
@@ -268,8 +306,9 @@ public class SONGWFragment extends Fragment {
             else if (intent.getAction().equals(GW_SETSCHDULE_INTENT)){
                 Log.d("Trigger",GW_SETSCHDULE_INTENT);
                 String message = intent.getStringExtra(GW_SETSCHDULE_MESSAGE);
-                Calendar cri = Calendar.getInstance();
-                TimeSchedule t  = new TimeSchedule();
+
+                Calendar cri = songw.getNowSchduletime();
+                TimeSchedule t  = new TimeSchedule(devicemap);
                 songw.setCycleTime(cri,t);
                 Log.d("Trigger",message);
             }

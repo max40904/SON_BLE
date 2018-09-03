@@ -26,6 +26,7 @@ import java.util.Map;
 
 import BLE.BleInterface;
 import Packet.BLEDataType;
+import Packet.PackageNode;
 import Packet.PackageTimeSchedule;
 import Packet.PacketAckJoin;
 import SON.DeviceInformation;
@@ -58,12 +59,14 @@ public class SONNodeFragment extends Fragment {
     public static final String RECEIVER_INTENT = "RECEIVER_INTENT";
     public static final String RECEIVER_MESSAGE = "RECEIVER_MESSAGE";
 
-
+    public static final String NODE_INTENT = "NODE_INTENT";
+    public static final String NODE_MESSAGE = "NODE_MESSAGE";
 
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
     private String UUID;
+    private String serialname;
     private OnFragmentInteractionListener mListener;
     private SONNode sonnode ;
     public SONNodeFragment() {
@@ -156,6 +159,9 @@ public class SONNodeFragment extends Fragment {
         LocalBroadcastManager.getInstance(getActivity()).registerReceiver((mBroadcastReceiver),
                 new IntentFilter(RECEIVER_INTENT)
         );
+        LocalBroadcastManager.getInstance(getActivity()).registerReceiver((mBroadcastReceiver),
+                new IntentFilter(NODE_INTENT)
+        );
     }
 
     @Override
@@ -216,33 +222,69 @@ public class SONNodeFragment extends Fragment {
         @Override
         public void onReceive(Context context, Intent intent)
         {
+            if (intent.getAction().equals(NODE_INTENT)){
+
+                byte [] oribyteA = intent.getByteArrayExtra(NODE_MESSAGE);
+                PackageNode recpackage =new PackageNode(oribyteA);
+                byte [] recSerialnumber = recpackage.getSerialNumber();
+                Log.d ("SerialCheck",Converter.byteToInt(recSerialnumber[0]) + " " + Integer.parseInt( sonnode.getTargetNode()) );
+                if (Converter.byteToInt(recSerialnumber[0])!= Integer.parseInt( sonnode.getTargetNode())){
+                    return ;
+                }
+                ble.stopScan();
 
 
-            if (intent.getAction().equals(RECEIVER_INTENT)){
+                Log.d("Trigger", "Split Node SerialNumber : "+Converter.bytesToHex(recpackage.getSerialNumber()));
+                Log.d("Trigger", "Split Node DataAmount : "+ ( recpackage.getDataAmount() & 0xff ));
+                Log.d("Trigger", "Split Node Data : "+Converter.bytesToHex(recpackage.getData()));
+
+                sonnode.setReceicontent(recpackage.getData());
+
+            }
+            else if (intent.getAction().equals(RECEIVER_INTENT)){
                 byte [] oribyteA = intent.getByteArrayExtra(RECEIVER_MESSAGE);
                 PacketAckJoin ackpacket = new PacketAckJoin(oribyteA);
                 Log.d("Trigger","MAC:"+ackpacket.getMac());
 
                 String realmac = new String (ackpacket.getMac(), StandardCharsets.UTF_8 );
                 if (realmac.equals(UUID.substring(0,8))){
+                    sonnode.stopJoinTime();
                     ble.stopAdvertising();
                     ble.stopScan();
                     ble.startScan(BLEDataType.Timeschdule,10);
+                    String tempserial = new String (ackpacket.getSerialnumber(), StandardCharsets.UTF_8 );
+                    serialname = tempserial;
+                    sonnode.setSerialname(serialname);
                 }
                 Log.d("Trigger",RECEIVER_MESSAGE);
             }
             else if (intent.getAction().equals(SETSCHDULE_INTENT)){
                 Log.d("Trigger",SETSCHDULE_INTENT);
                 ble.stopScan();
+
                 byte [] oribyteA = intent.getByteArrayExtra(SETSCHDULE_MESSAGE);
                 PackageTimeSchedule timepacket = new PackageTimeSchedule(oribyteA);
                 Log.d("Trigger", "Split TimeSchedule Minutes : "+(timepacket.getMinute() & 0xff));
                 Log.d("Trigger", "Split TimeSchedule Seconds : "+ ( timepacket.getSecond() & 0xff));
                 Log.d("Trigger", "Split TimeSchedule Slot Amount : "+(timepacket.getSlotNumber() & 0xff));
                 Log.d("Trigger", "Split TimeSchedule Slot State : "+Converter.bytesToHex(timepacket.getSlotState() ) );
+                int minute = timepacket.getMinute() & 0xff;
+                int second = timepacket.getSecond() & 0xff;
+                int slotnumber = timepacket.getSlotNumber() & 0xff;
+                int [] slotstate = new int [slotnumber * 2 ];
+                byte []  slotbyte = timepacket.getSlotState();
+                for (int i = 0 ; i < slotnumber * 2 ; i++){
+                    slotstate[i] = slotbyte[i] & 0xff;
+                }
 
                 Calendar cri = Calendar.getInstance();
-                TimeSchedule t  = new TimeSchedule();
+
+                cri.set(Calendar.MINUTE, minute);
+                cri.set(Calendar.SECOND, second);
+                if (minute == 0){
+                    cri.add(Calendar.HOUR,1);
+                }
+                TimeSchedule t  = new TimeSchedule(slotnumber,slotstate);
                 sonnode.setCycleTime(cri,t);
 
             }

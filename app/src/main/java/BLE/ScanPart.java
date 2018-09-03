@@ -77,8 +77,10 @@ public class ScanPart {
 
 
         // Stop the scan, wipe the callback.
-        mBluetoothLeScanner.stopScan(mScanCallback);
-        mScanCallback = null;
+        if (mScanCallback!=null) {
+            mBluetoothLeScanner.stopScan(mScanCallback);
+            mScanCallback = null;
+        }
 
 
         Log.d("ScannerFragment","stopScanning end");
@@ -137,6 +139,8 @@ public class ScanPart {
                             break;
 
                         case BLEDataType.Node:
+                            Log.d("Tracer", "SampleScanCallback Node " + oripack);
+                            sendIntentByte(SONGWFragment.GW_NODE_INTENT,SONGWFragment.GW_NODE_MESSAGE, result.getScanRecord().getBytes());
                             break;
 
                         default:
@@ -172,6 +176,8 @@ public class ScanPart {
 
 
                         case BLEDataType.Node:
+                            Log.d("Tracer", "SampleScanCallback Node " + oripack);
+                            sendIntentByte(SONNodeFragment.NODE_INTENT,SONNodeFragment.NODE_MESSAGE, result.getScanRecord().getBytes());
                             break;
 
                         default:
@@ -193,12 +199,16 @@ public class ScanPart {
         public void onScanResult(int callbackType, ScanResult result) {
             super.onScanResult(callbackType, result);
             Package oripack  = new Package(result.getScanRecord().getBytes());
+
+            Log.d("Tracer","onScanResult start");
+            Log.d("Type", "0"+oripack.getServicetpye());
             if (target != oripack.getServicetpye()&& target != 0){
                 return;
             }
-            Log.d("Tracer","onScanResult start");
+
             //GW
             if (flag){
+
                 switch(oripack.getServicetpye()){
                     case BLEDataType.Timeschdule:
 
@@ -210,10 +220,13 @@ public class ScanPart {
                         break;
 
                     case BLEDataType.AckJoin:
+
                         break;
 
 
                     case BLEDataType.Node:
+                        Log.d("Tracer", "SampleScanCallback Node " + oripack);
+                        sendIntentByte(SONGWFragment.GW_NODE_INTENT,SONGWFragment.GW_NODE_MESSAGE, result.getScanRecord().getBytes());
                         break;
 
                     default:
@@ -243,6 +256,8 @@ public class ScanPart {
 
 
                     case BLEDataType.Node:
+                        Log.d("Tracer", "SampleScanCallback Node " + oripack);
+                        sendIntentByte(SONNodeFragment.NODE_INTENT,SONNodeFragment.NODE_MESSAGE, result.getScanRecord().getBytes());
                         break;
 
                     default:

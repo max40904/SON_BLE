@@ -11,6 +11,7 @@ import android.widget.Toast;
 
 import com.example.max40904.son.MainActivity;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Timer;
@@ -19,26 +20,29 @@ import BLE.BleInterface;
 import GUI.SONNodeFragment;
 import Packet.BLEDataType;
 import Packet.PackageJoin;
+import Packet.PackageNode;
 import SON.SONConstants;
 import java.util.TimerTask;
-
+import Converter.Converter;
 import SON.TimeSchedule;
 
 public class SONNode {
-    String NodeName;
+
     private Timer Jointimer = new Timer();
     private Timer Receivetimer = new Timer();
     private Timer Scheduletimer = new Timer();
     private Timer Sendtimer = new Timer();
     private Context context;
     private  BleInterface ble;
-    private  String fakemac;
-    private String nodename;
+    private String fakemac;
+    private String serialname;
     public static final String RECEIVER_INTENT = "RECEIVER_INTENT";
     public static final String RECEIVER_MESSAGE = "RECEIVER_MESSAGE";
-
+    private byte [] messagecontent;
+    private byte [] reccontent;
+    private String targetrecnode;
     public SONNode(Context context, BleInterface ble){
-        NodeName = "unknown";
+        serialname = "unknown";
         Jointimer = new Timer();
         Receivetimer = new Timer();
         Scheduletimer = new Timer();
@@ -48,8 +52,9 @@ public class SONNode {
 
 
     }
-    public void setDID(String DID){
-        NodeName = DID;
+    public void setSerialname(String DID){
+        serialname = DID;
+        messagecontent = serialname.substring(3,4).getBytes();
     }
     public void setMacAddress(String mac){
         fakemac = mac;
@@ -59,31 +64,42 @@ public class SONNode {
 
         Jointimer.schedule(rectask,0,60*1000 );
     }
+    public void setReceicontent(byte [] content){
 
+        reccontent = content;
+    }
     public void stopJoinTime(){
 
         Jointimer.cancel();
 
     }
+    public String getTargetNode(){
+        return targetrecnode;
+    }
 
     public void setCycleTime(Calendar packetttime, TimeSchedule slotschedule){
+        setReceicontent(null);
         //receive
-        TimerTask rectask = new ReceiveSlot(context);
-        Calendar rec = (Calendar) packetttime.clone();
-        rec.add(Calendar.SECOND, SONConstants.timeslot * 1 );
-        Receivetimer.schedule(rectask,rec.getTime() );
+        if (slotschedule.getReceiveSlot(serialname) !=-1) {
+            TimerTask rectask = new ReceiveSlot(context);
+            Calendar rec = (Calendar) packetttime.clone();
+            rec.add(Calendar.SECOND, SONConstants.timeslot * slotschedule.getReceiveSlot(serialname));
+            Receivetimer.schedule(rectask, rec.getTime());
+            targetrecnode = "" + slotschedule.getTargetNode(serialname);
 
+        }
         //send
         TimerTask sendtask = new SendSlot(context);
         Calendar sen = (Calendar) packetttime.clone();
-        sen.add(Calendar.SECOND, SONConstants.timeslot * 2 );
+        sen.add(Calendar.SECOND, SONConstants.timeslot * slotschedule.getSendSlot(serialname) );
         Sendtimer.schedule(sendtask,sen.getTime() );
 
         //timeschedule
         TimerTask schedtask = new ScheduleSlot(context);
         Calendar sched = (Calendar) packetttime.clone();
-        sched.add(Calendar.SECOND, SONConstants.timeslot * 3 );
+        sched.add(Calendar.SECOND, SONConstants.timeslot * slotschedule.getTimeSchduleSlot() );
         Sendtimer.schedule(schedtask,sched.getTime() );
+
 
     }
 
@@ -98,7 +114,7 @@ public class SONNode {
 
             ble.startAdvertising(BLEDataType.Join_string, packet.getBroadcastData(), 60);
             ble.startScan(BLEDataType.AckJoin,60);
-            Log.d("Tracer","JoinSlot");
+            Log.d("TimerTask","JoinSlot");
         }
     }
     public class SendSlot extends TimerTask {
@@ -108,30 +124,27 @@ public class SONNode {
         }
         @Override
         public void run() {
+            ble.stopScan();
             byte [] test = new byte[10];
             Arrays.fill( test, (byte) 1 );
+            //public PackageNode( String serialnumber, int dataamount, byte [] constructdata)
+            byte [] temp = new byte [2];
+            temp[0] = 0x01;
+            temp[1] = 0x03;
 
-            ble.startAdvertising("0001", test, 5);
+            byte [] sendbyte = messagecontent;
+            if (reccontent!=null){
+                sendbyte = Converter.byteArrayCombinebyteArray(messagecontent,reccontent);
+            }
+
+            Log.d("Node_meesage",  new String (sendbyte,StandardCharsets.UTF_8));
+
+            PackageNode packetnode = new PackageNode(serialname, sendbyte.length , sendbyte);
+
+            ble.startAdvertising(BLEDataType.Node_string, packetnode.getBroadcastData(), 5);
 
 
-            Log.d("Tracer","SendSlot");
-        }
-    }
-    public class ScheduleSlot  extends TimerTask {
-        private Context context;
-        public ScheduleSlot(Context context){
-            this.context = context;
-        }
-        @Override
-        public void run() {
-            Bundle bundle = new Bundle();
-            bundle.putString(SONNodeFragment.SETSCHDULE_MESSAGE,"i am come from onResume");
-
-
-            Intent intent = new Intent(SONNodeFragment.SETSCHDULE_INTENT);
-            intent.putExtras(bundle);
-            LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
-            Log.d("Tracer","ScheduleSlot");
+            Log.d("TimerTask","SendSlot");
         }
     }
 
@@ -142,9 +155,26 @@ public class SONNode {
         }
         @Override
         public void run() {
-            Log.d("Tracer","ReceiveSlot");
+            ble.stopScan();
+            ble.startScan(BLEDataType.Node,SONConstants.timeslot);
+            Log.d("TimerTask","ReceiveSlot");
         }
     }
+
+    public class ScheduleSlot  extends TimerTask {
+        private Context context;
+        public ScheduleSlot(Context context){
+            this.context = context;
+        }
+        @Override
+        public void run() {
+            ble.stopScan();
+            ble.startScan(BLEDataType.Timeschdule,SONConstants.timeslot);
+            Log.d("TimerTask","ScheduleSlot");
+        }
+    }
+
+
 
 
 

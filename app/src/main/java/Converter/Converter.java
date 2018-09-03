@@ -2,7 +2,7 @@ package Converter;
 
 public class Converter {
     public  static int  byteToInt(byte data){
-        int re = data;
+        int re = data & 0xff;
         return re;
     }
     private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
@@ -14,6 +14,18 @@ public class Converter {
             hexChars[j * 2 + 1] = hexArray[v & 0x0F];
         }
         return new String(hexChars);
+    }
+
+    public static byte [] byteArrayCombinebyteArray(byte [] a, byte [] b ){
+        byte[] one = a;
+        byte[] two = b;
+        byte[] combined = new byte[one.length + two.length];
+
+        for (int i = 0; i < combined.length; ++i)
+        {
+            combined[i] = i < one.length ? one[i] : two[i - one.length];
+        }
+        return combined;
     }
 
 

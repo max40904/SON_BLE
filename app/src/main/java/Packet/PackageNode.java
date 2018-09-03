@@ -14,11 +14,11 @@ public class PackageNode extends Package {
     private byte[] data ;    //ASCII
     public PackageNode(byte [] incomingPackage){
         super(incomingPackage);
-        seriaNumber = Arrays.copyOfRange(incomingPackage, 8, 10); //java.util.Arrays
-        byte[] info_content = Arrays.copyOfRange(incomingPackage, 10, incomingPackage[4] + 5);
-        dataAmount = info_content[0];
+        seriaNumber = Arrays.copyOfRange(incomingPackage, 8, 9); //java.util.Arrays
+        data = Arrays.copyOfRange(incomingPackage, 10, incomingPackage[4] + 5);
+        dataAmount = incomingPackage[9];
         //dataAmount = info_content[1] - '0' & 0xFF; //to integer
-        data = Arrays.copyOfRange(info_content, 1, 1 + dataAmount);
+
     }
     public PackageNode( String serialnumber, int dataamount, byte [] constructdata){
         super( );
