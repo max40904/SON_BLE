@@ -62,7 +62,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_REQUEST_COARSE_LOCATION);
         }
-
+        Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+        startActivityForResult(enableBtIntent, Constants.REQUEST_ENABLE_BT);
 
         Log.d("Tracer",uniqueName);
         Log.d("Tracer", "MainActivity onCreate end");
@@ -148,7 +149,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         getSupportFragmentManager().beginTransaction().add(R.id.framelayout1, SONNodeFragment.newInstance(uniqueName,"world"),"f1").commit();
     }
     public void setBLEFragment(){
-        getSupportFragmentManager().beginTransaction().add(R.id.framelayout2, BLEFragement.newInstance(uniqueName,"world"),"f1").commit();
+       // getSupportFragmentManager().beginTransaction().add(R.id.framelayout2, BLEFragement.newInstance(uniqueName,"world"),"f1").commit();
 
     }
 

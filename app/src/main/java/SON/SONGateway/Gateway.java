@@ -29,6 +29,7 @@ public class Gateway {
     private Timer ReceiveNodetimer ;
     private Timer ReceiveJointimer ;
     private Timer SendScheduletimer ;
+    private Timer GUItimer ;
     private Calendar schduletime;
     private Context context;
     private BleInterface ble;
@@ -41,6 +42,7 @@ public class Gateway {
         ReceiveNodetimer = new Timer();
         ReceiveJointimer = new Timer();
         SendScheduletimer = new Timer();
+        GUItimer = new Timer();
         this.context = context;
         this.ble = ble;
         reccontent = null;
@@ -79,6 +81,13 @@ public class Gateway {
         Calendar sen = (Calendar) packetttime.clone();
         sen.add(Calendar.SECOND, SONConstants.timeslot * ( slotschedule.getTimeSchduleSlot()) );
         SendScheduletimer.schedule(SendSlot,sen.getTime() );
+
+        TimerTask GUISlot = new GUITask(context);
+        Calendar gcal = (Calendar) packetttime.clone();
+        gcal.add(Calendar.SECOND, SONConstants.timeslot * ( slotschedule.getTimeSchduleSlot() + 1 ) );
+        GUItimer.schedule(GUISlot,gcal.getTime() );
+
+
         reccontent = null;
     }
     //lost judge
@@ -134,6 +143,17 @@ public class Gateway {
         }
         return timestate[ ( numerslot  - sum_receivenumber - 1 )*2  ];
     }
+
+    public void sendIntentToGUI(String target ,int flag, String meessage ){
+        Bundle bundle = new Bundle();
+        bundle.putString(SONGWFragment.GW_GUI_TARGET, target);
+        bundle.putInt(SONGWFragment.GW_GUI_FLAG, flag);
+        bundle.putString(SONGWFragment.GW_GUI_MESSAGE, meessage);
+        Intent intent = new Intent(SONGWFragment.GW_GUI_INTENT);
+
+        intent.putExtras(bundle);
+        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+    }
     /**
      * Receive packet from node
      *
@@ -149,8 +169,11 @@ public class Gateway {
             ble.stopScan();
             ble.startScan(BLEDataType.Node, SONConstants.timeslot);
             Log.d("TimerTask","ReceiveNodeSlot");
+            sendIntentToGUI("adTextView", 0,"" );
+            sendIntentToGUI("recTextView", 1,"" );
         }
     }
+
 
     /**
      * Receive Packet from node which want to join internet
@@ -158,6 +181,7 @@ public class Gateway {
      *
      *
      * */
+
 
     public class ReceiveJoinSlot extends TimerTask {
         private Context context;
@@ -186,9 +210,14 @@ public class Gateway {
                     devicemap.remove(target);
                 }
             }
+            sendIntentToGUI("secondtext", 1 , "Recjoin");
             ble.stopScan();
             ble.startScan(BLEDataType.Join, SONConstants.timeslot);
+
             Log.d("TimerTask","ReceiveJoinSlot");
+            sendIntentToGUI("nodeInfoTextView", 0,"" );
+            sendIntentToGUI("adTextView", 0,"" );
+            sendIntentToGUI("recTextView", 1,"" );
         }
     }
     /**
@@ -218,13 +247,28 @@ public class Gateway {
                 PackageTimeSchedule timepacket = new PackageTimeSchedule(schduletime.get(Calendar.MINUTE), schduletime.get(Calendar.SECOND), sch.getSumSlot() - 2, sch.getSlotSchduler());
                 ble.startAdvertising(BLEDataType.Timeschdule_string, timepacket.getBroadcastData(), 5);
             }
-
+            sendIntentToGUI("text", 1 , "Timeschdule");
             Bundle bundle = new Bundle();
+            bundle = new Bundle();
             bundle.putString(SONGWFragment.GW_SETSCHDULE_MESSAGE,"i am come from SendSchduleSlot");
             Intent intent = new Intent(SONGWFragment.GW_SETSCHDULE_INTENT);
-
             intent.putExtras(bundle);
             LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+            sendIntentToGUI("adTextView", 1,"" );
+            sendIntentToGUI("recTextView", 0,"" );
+
+        }
+    }
+
+    public class GUITask extends TimerTask {
+        private Context context;
+        public GUITask(Context context){
+            this.context = context;
+        }
+        @Override
+        public void run() {
+            sendIntentToGUI("adTextView", 0,"" );
+            sendIntentToGUI("recTextView", 0,"" );
 
         }
     }

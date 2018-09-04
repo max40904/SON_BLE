@@ -6,14 +6,18 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 import Converter.Converter;
 import com.example.max40904.son.R;
@@ -48,19 +52,28 @@ public class SONNodeFragment extends Fragment {
 
     private BleInterface ble;
     private BluetoothAdapter mBluetoothAdapter;
+
+    private View view;
+
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
 
+
+
+
     public static final String SETSCHDULE_INTENT = "SETSCHDULE_INTENT";
     public static final String SETSCHDULE_MESSAGE = "SETSCHDULE_MESSAGE";
-
-
 
     public static final String RECEIVER_INTENT = "RECEIVER_INTENT";
     public static final String RECEIVER_MESSAGE = "RECEIVER_MESSAGE";
 
     public static final String NODE_INTENT = "NODE_INTENT";
     public static final String NODE_MESSAGE = "NODE_MESSAGE";
+
+    public static final String GUI_INTENT = "GUI_INTENT";
+    public static final String GUI_TARGET = "GUI_TARGET";
+    public static final String GUI_FLAG = "GUI_FLAG";
+    public static final String GUI_MESSAGE = "GUI_MESSAGE";
 
     // TODO: Rename and change types of parameters
     private String mParam1;
@@ -136,6 +149,10 @@ public class SONNodeFragment extends Fragment {
         }
 
 
+        /**
+         *
+         * GUI
+         * */
 
 
 
@@ -162,13 +179,21 @@ public class SONNodeFragment extends Fragment {
         LocalBroadcastManager.getInstance(getActivity()).registerReceiver((mBroadcastReceiver),
                 new IntentFilter(NODE_INTENT)
         );
+        LocalBroadcastManager.getInstance(getActivity()).registerReceiver((mBroadcastReceiver),
+                new IntentFilter(GUI_INTENT)
+        );
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        View newview = inflater.inflate(R.layout.fragment_sonnode,
+                container, false);
+
+
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_sonnode, container, false);
+        return newview;
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -180,9 +205,6 @@ public class SONNodeFragment extends Fragment {
     @Override
     public void onResume(){
         super.onResume();
-//        Intent intent = new Intent(SETSCHDULE_INTENT);
-//        intent.putExtra(SETSCHDULE_MESSAGE, "i am come from onResume");
-//        LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(intent);
         sonnode.startJoinTime();
     }
 
@@ -201,6 +223,49 @@ public class SONNodeFragment extends Fragment {
     public void onDetach() {
         super.onDetach();
         mListener = null;
+    }
+
+    public void setText(String target, int flag, String message ){
+        if (target.equals("askJoinTextView")){
+            TextView textView = (TextView) getView().findViewById(R.id.askJoinTextView);
+            if (flag ==0){
+                textView.setVisibility(View.INVISIBLE);
+            }
+            else{
+                textView.setVisibility(View.VISIBLE);
+            }
+
+
+        }
+        else if (target.equals("recNodeTextView")){
+            TextView textView = (TextView) getView().findViewById(R.id.recNodeTextView);
+            if (flag ==0){
+                textView.setVisibility(View.INVISIBLE);
+            }
+            else{
+                textView.setVisibility(View.VISIBLE);
+            }
+
+        }
+        else if (target.equals("adNodeTextView")){
+            TextView textView = (TextView) getView().findViewById(R.id.adNodeTextView);
+            if (flag ==0){
+                textView.setVisibility(View.INVISIBLE);
+            }
+            else{
+                textView.setVisibility(View.VISIBLE);
+            }
+        }
+        else if (target.equals("tschduleTextView")){
+            TextView textView = (TextView) getView().findViewById(R.id.tschduleTextView);
+            if (flag ==0){
+                textView.setVisibility(View.INVISIBLE);
+            }
+            else{
+                textView.setVisibility(View.VISIBLE);
+            }
+        }
+
     }
 
     /**
@@ -222,7 +287,14 @@ public class SONNodeFragment extends Fragment {
         @Override
         public void onReceive(Context context, Intent intent)
         {
-            if (intent.getAction().equals(NODE_INTENT)){
+            if (intent.getAction().equals(GUI_INTENT)){
+                String target = intent.getStringExtra(GUI_TARGET);
+                int flag = intent.getIntExtra(GUI_FLAG , 0);
+                String mes = intent.getStringExtra(GUI_MESSAGE);
+                setText(target, flag, mes );
+
+            }
+            else if (intent.getAction().equals(NODE_INTENT)){
 
                 byte [] oribyteA = intent.getByteArrayExtra(NODE_MESSAGE);
                 PackageNode recpackage =new PackageNode(oribyteA);
@@ -248,6 +320,7 @@ public class SONNodeFragment extends Fragment {
 
                 String realmac = new String (ackpacket.getMac(), StandardCharsets.UTF_8 );
                 if (realmac.equals(UUID.substring(0,8))){
+                    setText("askJoinTextView" , 0 , "");
                     sonnode.stopJoinTime();
                     ble.stopAdvertising();
                     ble.stopScan();

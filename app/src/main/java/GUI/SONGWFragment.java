@@ -14,6 +14,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.max40904.son.R;
@@ -72,6 +73,11 @@ public class SONGWFragment extends Fragment {
     public static final String GW_NODE_INTENT = "GW_NODE_INTENT";
     public static final String GW_NODE_MESSAGE = "GW_NODE_MESSAGE";
 
+    //TODO: receive package from Node
+    public static final String GW_GUI_INTENT = "GW_GUI_INTENT";
+    public static final String GW_GUI_TARGET = "GW_GUI_TARGET";
+    public static final String GW_GUI_FLAG = "GW_GUI_FLAG";
+    public static final String GW_GUI_MESSAGE = "GW_GUI_MESSAGE";
 
     public SONGWFragment() {
         // Required empty public constructor
@@ -155,6 +161,9 @@ public class SONGWFragment extends Fragment {
         LocalBroadcastManager.getInstance(getActivity()).registerReceiver((mBroadcastReceiver),
                 new IntentFilter(GW_NODE_INTENT)
         );
+        LocalBroadcastManager.getInstance(getActivity()).registerReceiver((mBroadcastReceiver),
+                new IntentFilter(GW_GUI_INTENT)
+        );
 
 
         Log.d("DEBUG MODE", "DEBUG");
@@ -163,8 +172,10 @@ public class SONGWFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        View newview = inflater.inflate(R.layout.fragment_songw,
+                container, false);
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_songw, container, false);
+        return newview;
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -201,6 +212,34 @@ public class SONGWFragment extends Fragment {
         super.onDetach();
         mListener = null;
     }
+    public void setText(String target, int flag, String message ){
+        if (target.equals("recTextView")){
+            TextView textView = (TextView) getView().findViewById(R.id.recTextView);
+            if (flag ==0){
+                textView.setVisibility(View.INVISIBLE);
+            }
+            else{
+                textView.setVisibility(View.VISIBLE);
+            }
+
+
+        }
+        else if (target.equals("adTextView")){
+            TextView textView = (TextView) getView().findViewById(R.id.adTextView);
+            if (flag ==0){
+                textView.setVisibility(View.INVISIBLE);
+            }
+            else{
+                textView.setVisibility(View.VISIBLE);
+            }
+
+        }
+        else if (target.equals("nodeInfoTextView")){
+            TextView textView = (TextView) getView().findViewById(R.id.nodeInfoTextView);
+            textView.setText("eresresrsresd\newtewtestsetset\nTEWTEWTwe\n");
+        }
+
+    }
 
     /**
      * This interface must be implemented by activities that contain this
@@ -221,7 +260,14 @@ public class SONGWFragment extends Fragment {
         @Override
         public void onReceive(Context context, Intent intent)
         {
-            if (intent.getAction().equals(GW_NODE_INTENT)){
+            if (intent.getAction().equals(GW_GUI_INTENT)){
+                String target = intent.getStringExtra(GW_GUI_TARGET);
+                int flag = intent.getIntExtra(GW_GUI_FLAG , 0);
+                String mes = intent.getStringExtra(GW_GUI_MESSAGE);
+                setText(target, flag, mes );
+
+            }
+            else if (intent.getAction().equals(GW_NODE_INTENT)){
                 //TODO: show data
                 byte [] oribyteA = intent.getByteArrayExtra(GW_NODE_MESSAGE);
                 PackageNode recpackage =new PackageNode(oribyteA);
@@ -308,7 +354,9 @@ public class SONGWFragment extends Fragment {
                 Log.d("Trigger",GW_RECEIVER_MESSAGE);
             }
             else if (intent.getAction().equals(GW_SETSCHDULE_INTENT)){
+
                 Log.d("Trigger",GW_SETSCHDULE_INTENT);
+
                 String message = intent.getStringExtra(GW_SETSCHDULE_MESSAGE);
 
                 Calendar cri = songw.getNowSchduletime();

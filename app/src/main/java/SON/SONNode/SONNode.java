@@ -17,6 +17,7 @@ import java.util.Calendar;
 import java.util.Timer;
 
 import BLE.BleInterface;
+import GUI.SONGWFragment;
 import GUI.SONNodeFragment;
 import Packet.BLEDataType;
 import Packet.PackageJoin;
@@ -32,6 +33,8 @@ public class SONNode {
     private Timer Receivetimer = new Timer();
     private Timer Scheduletimer = new Timer();
     private Timer Sendtimer = new Timer();
+    private Timer GUItimer = new Timer();
+    private Timer GUI2timer = new Timer();
     private Context context;
     private  BleInterface ble;
     private String fakemac;
@@ -94,6 +97,12 @@ public class SONNode {
         sen.add(Calendar.SECOND, SONConstants.timeslot * slotschedule.getSendSlot(serialname) );
         Sendtimer.schedule(sendtask,sen.getTime() );
 
+        if (slotschedule.getSendSlot(serialname) == 0 ){
+            TimerTask Gui2lot = new GUISlot(context);
+            Calendar gcal2 = (Calendar) packetttime.clone();
+            gcal2.add(Calendar.SECOND, SONConstants.timeslot * ( 1 +slotschedule.getSendSlot(serialname) ) );
+            GUI2timer.schedule(Gui2lot,gcal2.getTime() );
+        }
         //timeschedule
         TimerTask schedtask = new ScheduleSlot(context);
         Calendar sched = (Calendar) packetttime.clone();
@@ -101,8 +110,25 @@ public class SONNode {
         Sendtimer.schedule(schedtask,sched.getTime() );
 
 
-    }
 
+        //GUI
+        TimerTask GCISlot = new GUISlot(context);
+        Calendar gcal = (Calendar) packetttime.clone();
+        gcal.add(Calendar.SECOND, SONConstants.timeslot * ( 1 +slotschedule.getTimeSchduleSlot()) );
+        GUItimer.schedule(GCISlot,gcal.getTime() );
+
+
+    }
+    public void sendIntentToGUI(String target ,int flag, String meessage ){
+        Bundle bundle = new Bundle();
+        bundle.putString(SONNodeFragment.GUI_TARGET, target);
+        bundle.putInt(SONNodeFragment.GUI_FLAG, flag);
+        bundle.putString(SONNodeFragment.GUI_MESSAGE, meessage);
+        Intent intent = new Intent(SONNodeFragment.GUI_INTENT);
+
+        intent.putExtras(bundle);
+        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+    }
     public class JoinSlot extends TimerTask {
         private Context context;
         public JoinSlot(Context context){
@@ -115,6 +141,10 @@ public class SONNode {
             ble.startAdvertising(BLEDataType.Join_string, packet.getBroadcastData(), 60);
             ble.startScan(BLEDataType.AckJoin,60);
             Log.d("TimerTask","JoinSlot");
+            sendIntentToGUI("askJoinTextView", 1 , "");
+            sendIntentToGUI("recNodeTextView", 0 , "");
+            sendIntentToGUI("adNodeTextView", 0 , "");
+            sendIntentToGUI("tschduleTextView", 0, "");
         }
     }
     public class SendSlot extends TimerTask {
@@ -142,7 +172,10 @@ public class SONNode {
             PackageNode packetnode = new PackageNode(serialname, sendbyte.length , sendbyte);
 
             ble.startAdvertising(BLEDataType.Node_string, packetnode.getBroadcastData(), 5);
-
+            sendIntentToGUI("askJoinTextView", 0 , "");
+            sendIntentToGUI("recNodeTextView", 0 , "");
+            sendIntentToGUI("adNodeTextView", 1 , "");
+            sendIntentToGUI("tschduleTextView", 0, "");
 
             Log.d("TimerTask","SendSlot");
         }
@@ -157,6 +190,10 @@ public class SONNode {
         public void run() {
             ble.stopScan();
             ble.startScan(BLEDataType.Node,SONConstants.timeslot);
+            sendIntentToGUI("askJoinTextView", 0 , "");
+            sendIntentToGUI("recNodeTextView", 1 , "");
+            sendIntentToGUI("adNodeTextView", 0, "");
+            sendIntentToGUI("tschduleTextView", 0, "");
             Log.d("TimerTask","ReceiveSlot");
         }
     }
@@ -170,7 +207,30 @@ public class SONNode {
         public void run() {
             ble.stopScan();
             ble.startScan(BLEDataType.Timeschdule,SONConstants.timeslot);
+            sendIntentToGUI("askJoinTextView", 0 , "");
+            sendIntentToGUI("recNodeTextView", 0 , "");
+            sendIntentToGUI("adNodeTextView", 0, "");
+            sendIntentToGUI("tschduleTextView", 1, "");
+
             Log.d("TimerTask","ScheduleSlot");
+        }
+    }
+
+
+    public class GUISlot  extends TimerTask {
+        private Context context;
+        public GUISlot(Context context){
+            this.context = context;
+        }
+        @Override
+        public void run() {
+
+            sendIntentToGUI("askJoinTextView", 0 , "");
+            sendIntentToGUI("recNodeTextView", 0 , "");
+            sendIntentToGUI("adNodeTextView", 0, "");
+            sendIntentToGUI("tschduleTextView", 0, "");
+
+
         }
     }
 
