@@ -18,7 +18,9 @@ import android.widget.Toast;
 
 import com.example.max40904.son.R;
 
+import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
@@ -229,11 +231,13 @@ public class SONGWFragment extends Fragment {
                     return ;
                 }
                 ble.stopScan();
+
                 Log.d("Trigger", "Node SerialNumber : "+Converter.bytesToHex(recpackage.getSerialNumber()));
 
                 Log.d("Trigger", "Node DataAmount : "+ ( recpackage.getDataAmount() & 0xff ));
 
                 Log.d("Trigger", "Node Data : "+Converter.bytesToHex(recpackage.getData()));
+                songw.setReceicontent(recpackage.getData());
 
                 //TODO: if some body miss refresh map
 
@@ -291,8 +295,8 @@ public class SONGWFragment extends Fragment {
                      *
                      * */
                     songw.setDeviceInformation(devicemap);
+                    byte [] fakemessage  = new byte [devicemap.size()];
 
-                    Log.d ("Trigger","send byte to hex :"+new String(temp,StandardCharsets.UTF_8));
 
                     Log.d("Trigger", mac);
 

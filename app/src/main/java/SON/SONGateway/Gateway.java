@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import java.sql.Time;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Timer;
@@ -33,8 +34,8 @@ public class Gateway {
     private BleInterface ble;
     private String targetrecnode;
     private Map<String,DeviceInformation> devicemap;
-
-
+    private TimeSchedule nowschedule;
+    private byte [] reccontent;
     public  Gateway(Context context, BleInterface ble){
         GWName = "unknown";
         ReceiveNodetimer = new Timer();
@@ -42,6 +43,7 @@ public class Gateway {
         SendScheduletimer = new Timer();
         this.context = context;
         this.ble = ble;
+        reccontent = null;
     }
 
     public String getTargetNode(){
@@ -51,9 +53,14 @@ public class Gateway {
         devicemap = map;
     }
 
+    public void setReceicontent(byte [] content){
 
+        reccontent = content;
+    }
 
     public void setCycleTime(Calendar packetttime, TimeSchedule slotschedule){
+        nowschedule = slotschedule;
+
         if (slotschedule.getSumSlot() > 2 ) {
             //ReceiveNode
             TimerTask ReceiveNode = new ReceiveNodeSlot(context);
@@ -72,8 +79,7 @@ public class Gateway {
         Calendar sen = (Calendar) packetttime.clone();
         sen.add(Calendar.SECOND, SONConstants.timeslot * ( slotschedule.getTimeSchduleSlot()) );
         SendScheduletimer.schedule(SendSlot,sen.getTime() );
-
-
+        reccontent = null;
     }
     //lost judge
     public void judgement(){
@@ -109,6 +115,25 @@ public class Gateway {
     public void setCurrentSchduleTime(Calendar currenttime){
         schduletime = currenttime;
     }
+
+    public TimeSchedule getNowschedule(){
+        return nowschedule;
+    }
+    public int wholost(byte [] receivedata, TimeSchedule currentSchdule){
+
+        int [] timestate = currentSchdule.getSlotSchduler();
+        int numerslot = (currentSchdule.getSumSlot() - 2);
+        if (receivedata ==null){
+            return timestate[ ( numerslot-1  )*2  ];
+        }
+        int sum_receivenumber = receivedata.length;
+
+        //Check Number of state
+        if (timestate.length   == sum_receivenumber *2){
+            return -1;
+        }
+        return timestate[ ( numerslot  - sum_receivenumber - 1 )*2  ];
+    }
     /**
      * Receive packet from node
      *
@@ -141,6 +166,26 @@ public class Gateway {
         }
         @Override
         public void run() {
+            TimeSchedule sch  = new TimeSchedule(devicemap);
+            if (sch.getSumSlot() > 2){
+                int lostnode = wholost(reccontent,sch);
+
+                if (lostnode != -1){
+                    Log.d("lostnode", "" + lostnode);
+                    String target = "";
+                    for (Map.Entry<String, DeviceInformation> entry : devicemap.entrySet()){
+                        String tempname = entry.getKey();
+                        DeviceInformation value = entry.getValue();
+
+                        if (Integer.parseInt(value.getSerialnumber()) == lostnode){
+                            Log.d("lostnode", "sucess" +  lostnode);
+                            target = tempname;
+                        }
+
+                    }
+                    devicemap.remove(target);
+                }
+            }
             ble.stopScan();
             ble.startScan(BLEDataType.Join, SONConstants.timeslot);
             Log.d("TimerTask","ReceiveJoinSlot");
@@ -160,13 +205,15 @@ public class Gateway {
         @Override
         public void run() {
             ble.stopScan();
+
             Log.d("TimerTask","SendScheduleSlot");
             //public PackageTimeSchedule(int minute ,int second ,int slotnumber ,int[] slotstate )
-            int [] newarray ;
 
             schduletime= getNextCurrentSchduleTime( );
-
             TimeSchedule sch  = new TimeSchedule(devicemap);
+
+
+
             if (sch.getSumSlot() > 2) {
                 PackageTimeSchedule timepacket = new PackageTimeSchedule(schduletime.get(Calendar.MINUTE), schduletime.get(Calendar.SECOND), sch.getSumSlot() - 2, sch.getSlotSchduler());
                 ble.startAdvertising(BLEDataType.Timeschdule_string, timepacket.getBroadcastData(), 5);
@@ -181,6 +228,9 @@ public class Gateway {
 
         }
     }
+
+
+
 
 
 

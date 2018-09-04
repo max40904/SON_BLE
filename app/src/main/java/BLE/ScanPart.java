@@ -59,6 +59,7 @@ public class ScanPart {
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
+
                     stopScanning();
                 }
             }, time * 1000);
