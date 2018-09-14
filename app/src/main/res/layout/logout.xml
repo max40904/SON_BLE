@@ -39,7 +39,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="2"
-            android:text="帳號" />
+            android:text="X" />
 
         <EditText
             android:id="@+id/editText2"
@@ -48,7 +48,7 @@
             android:layout_weight="2"
             android:ems="10"
             android:inputType="textPersonName"
-            android:text="Name" />
+            android:text="1" />
 
     </LinearLayout>
 
@@ -63,7 +63,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="2"
-            android:text="密碼" />
+            android:text="Y" />
 
         <EditText
             android:id="@+id/editText3"
@@ -72,7 +72,7 @@
             android:layout_weight="2"
             android:ems="10"
             android:inputType="textPersonName"
-            android:text="Name" />
+            android:text="2" />
 
     </LinearLayout>
 

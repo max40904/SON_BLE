@@ -6,17 +6,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import Converter.Converter;
@@ -25,15 +22,12 @@ import com.example.max40904.son.R;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
 
-import BLE.BleInterface;
+import blework.BleInterface;
 import Packet.BLEDataType;
 import Packet.PackageNode;
 import Packet.PackageTimeSchedule;
 import Packet.PacketAckJoin;
-import SON.DeviceInformation;
 import SON.SONNode.SONNode;
 import SON.TimeSchedule;
 
@@ -57,7 +51,7 @@ public class SONNodeFragment extends Fragment {
 
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
-
+    private static final String ARG_PARAM3 = "param3";
 
 
 
@@ -78,10 +72,13 @@ public class SONNodeFragment extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+    private String mParam3;
     private String UUID;
     private String serialname;
     private OnFragmentInteractionListener mListener;
     private SONNode sonnode ;
+    private int x;
+    private int y;
     public SONNodeFragment() {
         // Required empty public constructor
 
@@ -96,11 +93,12 @@ public class SONNodeFragment extends Fragment {
      * @return A new instance of fragment SONNodeFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static SONNodeFragment newInstance(String param1, String param2) {
+    public static SONNodeFragment newInstance(String param1, String param2,String param3) {
         SONNodeFragment fragment = new SONNodeFragment();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
+        args.putString(ARG_PARAM3, param3);
         fragment.setArguments(args);
         return fragment;
     }
@@ -111,6 +109,9 @@ public class SONNodeFragment extends Fragment {
         if (getArguments() != null) {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
+            mParam3 = getArguments().getString(ARG_PARAM3);
+            x = Integer.parseInt(mParam2);
+            y = Integer.parseInt(mParam3);
             UUID = mParam1;
         }
 
@@ -166,6 +167,7 @@ public class SONNodeFragment extends Fragment {
 
         sonnode = new SONNode(getContext(),ble);
         sonnode.setMacAddress(UUID.substring(0,8));
+        sonnode.setLoc(x,y);
         byte [] test = new byte[10];
         Arrays.fill( test, (byte) 1 );
 
@@ -265,6 +267,56 @@ public class SONNodeFragment extends Fragment {
                 textView.setVisibility(View.VISIBLE);
             }
         }
+        else if (target.equals("receiNodeTextView")){
+
+            TextView textView = (TextView) getView().findViewById(R.id.receiNodeTextView);
+            if (flag ==0){
+                textView.setVisibility(View.INVISIBLE);
+            }
+            else if (flag == 1){
+                textView.setVisibility(View.VISIBLE);
+            }
+            else if (flag == 2){
+                textView.setText(message);
+            }
+            else if (flag == 3){
+                textView.setVisibility(View.VISIBLE);
+            }
+        }
+        else if (target.equals("sendNodeTextView")){
+            TextView textView = (TextView) getView().findViewById(R.id.sendNodeTextView);
+            if (flag ==0){
+                textView.setVisibility(View.INVISIBLE);
+            }
+            else if (flag == 1){
+                textView.setVisibility(View.VISIBLE);
+            }
+            else if (flag == 2){
+                if (message.equals("90") ){
+                    message = "Gateway";
+                }
+
+                textView.setText(message);
+            }
+            else if (flag == 3){
+                textView.setVisibility(View.VISIBLE);
+            }
+        }
+        else if (target.equals("SerialNameTextView")){
+            TextView textView = (TextView) getView().findViewById(R.id.SerialNameTextView);
+            if (flag ==0){
+                textView.setVisibility(View.INVISIBLE);
+            }
+            else if (flag == 1){
+                textView.setVisibility(View.VISIBLE);
+            }
+            else if (flag == 2){
+                textView.setText("Serial Name :" + message);
+            }
+            else if (flag == 3){
+                textView.setVisibility(View.VISIBLE);
+            }
+        }
 
     }
 
@@ -325,8 +377,10 @@ public class SONNodeFragment extends Fragment {
                     ble.stopAdvertising();
                     ble.stopScan();
                     ble.startScan(BLEDataType.Timeschdule,10);
+
                     String tempserial = new String (ackpacket.getSerialnumber(), StandardCharsets.UTF_8 );
                     serialname = tempserial;
+                    setText("SerialNameTextView",2, serialname);
                     sonnode.setSerialname(serialname);
                 }
                 Log.d("Trigger",RECEIVER_MESSAGE);

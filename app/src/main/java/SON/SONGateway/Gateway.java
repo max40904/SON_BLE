@@ -6,13 +6,12 @@ import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
-import java.sql.Time;
+import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import BLE.BleInterface;
+import blework.BleInterface;
 import GUI.SONGWFragment;
 import Packet.BLEDataType;
 import Packet.PackageTimeSchedule;
@@ -21,7 +20,6 @@ import SON.SONConstants;
 
 import SON.TimeSchedule;
 import java.util.Map;
-import PathAlgorithm.PathAlgorithmInterface;
 
 public class Gateway {
     String GWName;
@@ -62,7 +60,7 @@ public class Gateway {
 
     public void setCycleTime(Calendar packetttime, TimeSchedule slotschedule){
         nowschedule = slotschedule;
-
+        reccontent = null;
         if (slotschedule.getSumSlot() > 2 ) {
             //ReceiveNode
             TimerTask ReceiveNode = new ReceiveNodeSlot(context);
@@ -70,6 +68,8 @@ public class Gateway {
             rn.add(Calendar.SECOND, SONConstants.timeslot *  ( slotschedule.getReceiveSlot(serialname)  )  );
             ReceiveNodetimer.schedule(ReceiveNode, rn.getTime());
             targetrecnode = "" + slotschedule.getTargetNode(serialname);
+
+
         }
         //ReceiveJoin
         TimerTask ReceiveJoin = new ReceiveJoinSlot(context);
@@ -88,7 +88,10 @@ public class Gateway {
         GUItimer.schedule(GUISlot,gcal.getTime() );
 
 
-        reccontent = null;
+
+
+
+
     }
     //lost judge
     public void judgement(){
@@ -154,6 +157,68 @@ public class Gateway {
         intent.putExtras(bundle);
         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
     }
+
+    public String getNodeStatus(byte[] receivemessage , TimeSchedule schdule, Map<String,DeviceInformation>devicemap ){
+        String message  = String.format( "%-16s%-16s%-16s%-10s\n","Node","Con","X","Y"   );
+        if (receivemessage ==null){
+
+            for (Map.Entry<String, DeviceInformation> entry : devicemap.entrySet()){
+                DeviceInformation temp =  entry.getValue();
+                String newitem =String.format("%-16s%-16s%-16s%-10s\n",temp.serialnumber,"Null",""+temp.getX(),""+temp.getY() );
+                message +=newitem;
+
+            }
+            return message;
+
+
+        }
+        else {
+            String receiv = new String(receivemessage, StandardCharsets.UTF_8);
+            for (Map.Entry<String, DeviceInformation> entry : devicemap.entrySet()){
+                DeviceInformation temp =  entry.getValue();
+
+                //generate format
+                int [] timeslot = schdule.getSlotSchduler();
+                String [][] table = new String [timeslot.length/2  ][2];
+                for (int i = 0 ; i <timeslot.length/2 ; i++ ){
+                    for (int j = 0 ; j < 2 ; j++){
+                        table[i][j] =null;
+                    }
+                }
+                for (int i = 0 ; i < timeslot.length/2 ; i++){
+                    table[i][0] = ""+timeslot[i*2];
+                }
+                for (int i = 0 ; i <receiv.length() ;i++ ){
+                    table[timeslot.length/2-i -1][1] = ""+receiv.substring(i,i+1);
+                }
+
+                //use serialname serach table to find data
+                String content = null;
+                for (int i = 0 ; i < timeslot.length/2 ;i++){
+                    if (Integer.parseInt(temp.serialnumber) == Integer.parseInt(table[i][0]) ){
+                        content = null;
+                        if (table[i][1] !=null){
+                            content = table[i][1];
+                        }
+
+                        break;
+                    }
+                }
+
+
+                //set new String
+                String newitem =String.format("%-16s%-16s%-16s%-10s\n",temp.serialnumber,content,""+temp.getX(),""+temp.getY() );
+                message +=newitem;
+
+            }
+            return message;
+
+        }
+
+
+
+    }
+
     /**
      * Receive packet from node
      *
@@ -175,6 +240,7 @@ public class Gateway {
     }
 
 
+
     /**
      * Receive Packet from node which want to join internet
      * Can receive A lot of same time
@@ -190,8 +256,10 @@ public class Gateway {
         }
         @Override
         public void run() {
+
             TimeSchedule sch  = new TimeSchedule(devicemap);
             if (sch.getSumSlot() > 2){
+                sendIntentToGUI("nodeInfoTextView",0,getNodeStatus(  reccontent,sch,devicemap ));
                 int lostnode = wholost(reccontent,sch);
 
                 if (lostnode != -1){
@@ -215,7 +283,6 @@ public class Gateway {
             ble.startScan(BLEDataType.Join, SONConstants.timeslot);
 
             Log.d("TimerTask","ReceiveJoinSlot");
-            sendIntentToGUI("nodeInfoTextView", 0,"" );
             sendIntentToGUI("adTextView", 0,"" );
             sendIntentToGUI("recTextView", 1,"" );
         }

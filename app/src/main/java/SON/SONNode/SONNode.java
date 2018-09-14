@@ -1,23 +1,17 @@
 package SON.SONNode;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.widget.Toast;
-
-import com.example.max40904.son.MainActivity;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Timer;
 
-import BLE.BleInterface;
-import GUI.SONGWFragment;
+import blework.BleInterface;
 import GUI.SONNodeFragment;
 import Packet.BLEDataType;
 import Packet.PackageJoin;
@@ -44,6 +38,8 @@ public class SONNode {
     private byte [] messagecontent;
     private byte [] reccontent;
     private String targetrecnode;
+    private int locX;
+    private int locY;
     public SONNode(Context context, BleInterface ble){
         serialname = "unknown";
         Jointimer = new Timer();
@@ -71,6 +67,11 @@ public class SONNode {
 
         reccontent = content;
     }
+
+    public void setLoc(int x, int y){
+        locX = x;
+        locY = y;
+    }
     public void stopJoinTime(){
 
         Jointimer.cancel();
@@ -89,6 +90,7 @@ public class SONNode {
             rec.add(Calendar.SECOND, SONConstants.timeslot * slotschedule.getReceiveSlot(serialname));
             Receivetimer.schedule(rectask, rec.getTime());
             targetrecnode = "" + slotschedule.getTargetNode(serialname);
+            sendIntentToGUI("receiNodeTextView", 2 , targetrecnode);
 
         }
         //send
@@ -96,13 +98,14 @@ public class SONNode {
         Calendar sen = (Calendar) packetttime.clone();
         sen.add(Calendar.SECOND, SONConstants.timeslot * slotschedule.getSendSlot(serialname) );
         Sendtimer.schedule(sendtask,sen.getTime() );
+        String SendTOStr = ""+slotschedule.getSendToNode(serialname);
+        sendIntentToGUI("sendNodeTextView", 2 , SendTOStr);
 
-        if (slotschedule.getSendSlot(serialname) == 0 ){
             TimerTask Gui2lot = new GUISlot(context);
             Calendar gcal2 = (Calendar) packetttime.clone();
             gcal2.add(Calendar.SECOND, SONConstants.timeslot * ( 1 +slotschedule.getSendSlot(serialname) ) );
             GUI2timer.schedule(Gui2lot,gcal2.getTime() );
-        }
+
         //timeschedule
         TimerTask schedtask = new ScheduleSlot(context);
         Calendar sched = (Calendar) packetttime.clone();
@@ -136,7 +139,7 @@ public class SONNode {
         }
         @Override
         public void run() {
-            PackageJoin packet = new PackageJoin(fakemac);
+            PackageJoin packet = new PackageJoin(fakemac,locX,locY);
 
             ble.startAdvertising(BLEDataType.Join_string, packet.getBroadcastData(), 60);
             ble.startScan(BLEDataType.AckJoin,60);

@@ -19,14 +19,12 @@ import android.widget.Toast;
 
 import com.example.max40904.son.R;
 
-import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
-import BLE.BleInterface;
+import blework.BleInterface;
 import Packet.BLEDataType;
 import Packet.PackageJoin;
 import Packet.PackageNode;
@@ -152,6 +150,8 @@ public class SONGWFragment extends Fragment {
 
         songw = new Gateway(getContext(), ble);
         songw.setDeviceInformation(devicemap);
+
+
         LocalBroadcastManager.getInstance(getActivity()).registerReceiver((mBroadcastReceiver),
                 new IntentFilter(GW_SETSCHDULE_INTENT)
         );
@@ -235,9 +235,16 @@ public class SONGWFragment extends Fragment {
 
         }
         else if (target.equals("nodeInfoTextView")){
-            TextView textView = (TextView) getView().findViewById(R.id.nodeInfoTextView);
-            textView.setText("eresresrsresd\newtewtestsetset\nTEWTEWTwe\n");
+
+
+                TextView textView = (TextView) getView().findViewById(R.id.nodeInfoTextView);
+
+                textView.setText(message);
+
+
         }
+
+
 
     }
 
@@ -320,7 +327,7 @@ public class SONGWFragment extends Fragment {
                      * input into map
                      *
                      */
-                    DeviceInformation newdevice = new DeviceInformation(hex, true, 0 , 0 );
+                    DeviceInformation newdevice = new DeviceInformation(hex, true, recpackage.getX()&0Xff , recpackage.getY() & 0xff );
                     devicemap.put(mac, newdevice);
                     serial++;
 

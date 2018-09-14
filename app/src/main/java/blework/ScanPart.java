@@ -1,4 +1,4 @@
-package BLE;
+package blework;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.le.BluetoothLeScanner;
@@ -16,7 +16,6 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import GUI.SONGWFragment;
 import GUI.SONNodeFragment;

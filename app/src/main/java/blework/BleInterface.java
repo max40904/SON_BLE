@@ -1,4 +1,4 @@
-package BLE;
+package blework;
 
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;

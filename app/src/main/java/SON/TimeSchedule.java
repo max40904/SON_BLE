@@ -12,7 +12,27 @@ public  class TimeSchedule {
     public TimeSchedule(Map<String,DeviceInformation> devicemap){
         this.devicemap = devicemap;
         slotnumber = devicemap.size();
-        TimeSlot = PathAlgorithmInterface.getPathResult(devicemap);
+        TimeSlot = null;
+        if (devicemap.size()!=0) {
+            int[] path = PathAlgorithmInterface.getShortestPath(devicemap);
+            int[] newpath = new int[devicemap.size() * 2];
+            int x = 0;
+            for (int i = path.length - 1; i >= 0; i--) {
+                newpath[x * 2] = path[i];
+                x++;
+            }
+
+
+            x = 0;
+            for (int i = path.length - 2; i >= 0; i--) {
+                newpath[x * 2 + 1] = path[i];
+                x++;
+            }
+            newpath[devicemap.size() * 2 - 1] = 90;
+            TimeSlot = newpath;
+        }
+
+
     }
     public TimeSchedule(int slotnumber, int [] TimeSlot){
         this.slotnumber = slotnumber;
@@ -68,6 +88,22 @@ public  class TimeSchedule {
 
         }
         return 0;
+    }
+    //get B {[A][B]}
+    public int getSendToNode(String nNode){
+        int nodename = Integer.parseInt(nNode);
+        for (int i = 0  ; i < slotnumber ; i++){
+            if (TimeSlot[i*2] == nodename){
+                return  TimeSlot[ i * 2  + 1] ;
+            }
+
+        }
+        return 0;
+    }
+
+    public int getTimeSlotWhoSend(int n){
+
+        return TimeSlot[n*2];
     }
 //    public TimeSchedule(PackageTimeSchedule packet, Calendar calendar){
 //        this.packet = packet;

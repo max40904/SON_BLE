@@ -23,9 +23,10 @@
 
         </activity>
         <service
-            android:name="BLE.AdvertiserService"
+            android:name="blework.AdvertiserService"
             android:enabled="true"
-            android:exported="false" >
+            android:exported="false">
+
         </service>
 
 

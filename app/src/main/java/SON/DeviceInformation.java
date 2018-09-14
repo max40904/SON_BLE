@@ -20,11 +20,11 @@ public class DeviceInformation {
         return state;
     }
 
-    public int getLOC_X(){
+    public int getX(){
         return x;
     }
 
-    public int getLOC_Y(){
+    public int getY(){
         return y;
     }
 }

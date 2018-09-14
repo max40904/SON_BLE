@@ -2,8 +2,6 @@ package com.example.max40904.son;
 
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothManager;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -20,16 +18,12 @@ import android.widget.Toast;
 
 
 import java.nio.charset.StandardCharsets;
-import java.util.Timer;
 import java.util.TimerTask;
-import java.util.Calendar;
 
 import GUI.BLEFragement;
 import GUI.SONGWFragment;
 import GUI.SONNodeFragment;
-import SON.TimeSchedule;
-import SON.SONNode.SONNode;
-import BLE.Constants;
+import blework.Constants;
 import java.util.UUID;
 import Converter.Converter;
 
@@ -73,18 +67,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onResume() {
         super.onResume();
-        uniqueName.substring(0,8);
-        Log.d("Tracer",uniqueName.substring(0,8) );
-
-        PackageJoin join = new PackageJoin(uniqueName.substring(0,8));
-
-
-        Log.d("Tracer", "DATA : "+new String(join.getRawData(), StandardCharsets.UTF_8));
-        Log.d("Tracer", "UUID : "+Converter.bytesToHex(join.getUUID ( ) ) );
-        PackageJoin ackJoin = new PackageJoin(join.getOriData());
-
-        Log.d("Tracer", "newDATA : "+new String(ackJoin.getRawData(), StandardCharsets.UTF_8));
-        Log.d("Tracer", "newUUID : "+Converter.bytesToHex(ackJoin.getUUID ( ) ) );
+//        uniqueName.substring(0,8);
+//        Log.d("Tracer",uniqueName.substring(0,8) );
+//
+//        PackageJoin join = new PackageJoin(uniqueName.substring(0,8));
+//
+//
+//        Log.d("Tracer", "DATA : "+new String(join.getRawData(), StandardCharsets.UTF_8));
+//        Log.d("Tracer", "UUID : "+Converter.bytesToHex(join.getUUID ( ) ) );
+//        PackageJoin ackJoin = new PackageJoin(join.getOriData());
+//
+//        Log.d("Tracer", "newDATA : "+new String(ackJoin.getRawData(), StandardCharsets.UTF_8));
+//        Log.d("Tracer", "newUUID : "+Converter.bytesToHex(ackJoin.getUUID ( ) ) );
 
 
 
@@ -106,9 +100,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Log.d("Tracer","1");
                 if (NODE.isChecked()) {
 
+                    int loc_x =Integer.parseInt( x.getText().toString());
+                    int loc_y =Integer.parseInt( y.getText().toString());
                     Toast.makeText(this, "runOnUiThread 執行了！", Toast.LENGTH_SHORT).show();
                     Log.d("Tracer","2");
-                    setSONNodeFragment();
+                    setSONNodeFragment(loc_x,loc_y);
 
 
                 }
@@ -145,8 +141,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void setSONGGatewayFragment(){
         getSupportFragmentManager().beginTransaction().add(R.id.framelayout1, SONGWFragment.newInstance(uniqueName,"world"),"f1").commit();
     }
-    public void setSONNodeFragment(){
-        getSupportFragmentManager().beginTransaction().add(R.id.framelayout1, SONNodeFragment.newInstance(uniqueName,"world"),"f1").commit();
+    public void setSONNodeFragment(int x , int y ){
+        getSupportFragmentManager().beginTransaction().add(R.id.framelayout1, SONNodeFragment.newInstance(uniqueName,x+"", y+""),"f1").commit();
     }
     public void setBLEFragment(){
        // getSupportFragmentManager().beginTransaction().add(R.id.framelayout2, BLEFragement.newInstance(uniqueName,"world"),"f1").commit();
